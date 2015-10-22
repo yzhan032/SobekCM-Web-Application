@@ -39,6 +39,7 @@ namespace SobekCM.Core.Settings
 
         private string inProcessLocationOverride;
 
+        /// <summary> Gets the URL for the SobekCM engine for this instance </summary>
         public string Engine_URL { get { return System_Base_URL + "engine/";  } }
 
         /// <summary> constructor sets all the values to default empty strings </summary>
@@ -55,7 +56,7 @@ namespace SobekCM.Core.Settings
                 Base_URL = String.Empty;
                 Image_URL = String.Empty;
                 SobekCM_ImageServer = String.Empty;
-                Online_Edit_Submit_Enabled = false;
+                Online_Item_Submit_Enabled = false;
                 Caching_Server = String.Empty;
                 Privacy_Email_Address = String.Empty;
                 Metadata_Help_URL_Base = String.Empty;
@@ -77,8 +78,13 @@ namespace SobekCM.Core.Settings
                 Static_Resources_Config_File = "CDN";
                 Send_Email_On_Added_Aggregation = "Always";
                 Builder_Send_Usage_Emails = false;
+                Builder_Add_PageTurner_ItemViewer = false;
 
                 MarcGeneration = new Marc21_Settings();
+
+                // Current hard coded
+                JPEG_Maximum_Height = 1600;
+                JPEG_Maximum_Width = 1200;
 
                 // Define new empty collections
                 dispositionLookup = new Dictionary<int, Disposition_Option>();
@@ -220,7 +226,9 @@ namespace SobekCM.Core.Settings
 
         /// <summary> Network directory for the SobekCM web application server </summary>
         [DataMember]
-        public string Application_Server_Network { get; set; }
+        public string Application_Server_Network 
+        { get; 
+            set; }
 
         /// <summary> Primary URL for this instance of the SobekCM web application server </summary>
         [DataMember]
@@ -248,6 +256,10 @@ namespace SobekCM.Core.Settings
         /// <summary> Gets the base URL for this instance, without the application name </summary>
         [DataMember]
         public string Base_URL { get; set; }
+
+        /// <summary> Flag indicates if the page turner should be added automatically </summary>
+        [DataMember]
+        public bool Builder_Add_PageTurner_ItemViewer { get; set; }
 
         /// <summary> IIS web log location (usually a network share) for the builder
         /// to read the logs and add the usage statistics to the database </summary>
@@ -319,6 +331,14 @@ namespace SobekCM.Core.Settings
         [DataMember]
         public bool Detailed_User_Aggregation_Permissions { get; set; }
 
+        /// <summary> Flag indicates if logon has been restricted to system admins </summary>
+        [DataMember]
+        public bool Disable_Standard_User_Logon_Flag { get; set; }
+
+        /// <summary> Message to go with the logon restriction </summary>
+        [DataMember]
+        public string Disable_Standard_User_Logon_Message { get; set; }
+
         /// <summary> URL for the Solr/Lucene index for the document metadata and text </summary>
         [DataMember]
         public string Document_Solr_Index_URL { get; set; }
@@ -374,9 +394,17 @@ namespace SobekCM.Core.Settings
         [DataMember]
         public int JPEG_Width { get; set; }
 
-        /// <summary> Gets the library-wide setting for height created jpeg derivatives </summary>
+        /// <summary> Gets the library-wide setting for height of created jpeg derivatives </summary>
         [DataMember]
         public int JPEG_Height { get; set; }
+
+        /// <summary> Gets the library-wide setting for MAXIMUM width of uploaded jpegs before they are downsampled and a zoomable image created </summary>
+        [DataMember]
+        public int JPEG_Maximum_Width { get; set; }
+
+        /// <summary> Gets the library-wide setting for MAXIMUM height of uploaded jpegs before they are downsampled and a zoomable image created </summary>
+        [DataMember]
+        public int JPEG_Maximum_Height { get; set; }
 
         /// <summary> Kakadu JPEG2000 script will override the specifications used when creating zoomable images </summary>
         [DataMember]
@@ -412,7 +440,7 @@ namespace SobekCM.Core.Settings
 
         /// <summary> Flag indicates if online submissions and edits can occur at the moment </summary>
         [DataMember]
-        public bool Online_Edit_Submit_Enabled { get; set; }
+        public bool Online_Item_Submit_Enabled { get; set; }
 
         /// <summary> Folder where files bound for archiving are placed </summary>
         [DataMember]
@@ -726,6 +754,7 @@ namespace SobekCM.Core.Settings
             return userInProcessDirectory;
         }
 
+        /// <summary> Method is called by the serializer after this item is unserialized </summary>
         public void PostUnSerialization()
         {
             // Populate the dictionaries for looking up metadata search fields by code, id, name, etc..

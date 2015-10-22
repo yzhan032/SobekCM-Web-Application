@@ -7,21 +7,23 @@ using System.IO;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Xml;
+using EngineAgnosticLayerDbAccess;
 using SobekCM.Core.Configuration;
-using SobekCM.Core.Database;
 using SobekCM.Core.Navigation;
 using SobekCM.Core.Search;
 using SobekCM.Core.Settings;
 using SobekCM.Engine_Library.Configuration;
 using SobekCM.Engine_Library.Database;
 using SobekCM.Engine_Library.Items.BriefItems;
-using SobekCM.Engine_Library.Navigation;
+using SobekCM.Resource_Object.Database;
 using SobekCM.Resource_Object.OAI.Writer;
 
 #endregion
 
 namespace SobekCM.Engine_Library.Settings
 {
+    /// <summary> Build the instance wide settings, from configuration files and from data 
+    /// returned from the database </summary>
     public static  class InstanceWide_Settings_Builder
     {
         #region Constant values 
@@ -31,10 +33,10 @@ namespace SobekCM.Engine_Library.Settings
 
         /// <summary> Current version number associated with this SobekCM digital repository web application </summary>
         // DO NOT CHANGE THIS LINE.. THIS IS READ BY THE CODE DOCUMENTATION BUILDING TASK
-        private const string CURRENT_WEB_VERSION = "4.8.9B";
+        private const string CURRENT_WEB_VERSION = "4.9.0";
 
         /// <summary> Current version number associated with this SobekCM builder application </summary>
-        private const string CURRENT_BUILDER_VERSION = "4.8.9B"; 
+        private const string CURRENT_BUILDER_VERSION = "4.9.0"; 
 
         /// <summary> Number of ticks that a complete package must age before being processed </summary>
         /// <value> This is currently set to 15 minutes (in ticks) </value>
@@ -73,7 +75,7 @@ namespace SobekCM.Engine_Library.Settings
 
             // Set the connection string to the database
             Engine_Database.Connection_String = returnValue.Database_Connections[0].Connection_String;
-            Resource_Object.Database.SobekCM_Database.Connection_String = returnValue.Database_Connections[0].Connection_String;
+            SobekCM_Database.Connection_String = returnValue.Database_Connections[0].Connection_String;
 
             // Get the settings
             DataSet sobekCMSettings = Engine_Database.Get_Settings_Complete(null);
@@ -99,6 +101,16 @@ namespace SobekCM.Engine_Library.Settings
                 returnValue.ContactForm = ContactForm_Configuration_Reader.Read_Config(returnValue.Base_Directory + "\\config\\default\\sobekcm_contactform.config");
             }
 
+            // Try to read the QUALITY CONTROL configuration file
+            if (File.Exists(returnValue.Base_Directory + "\\config\\user\\sobekcm_qc.config"))
+            {
+                QualityControl_Configuration.Read_Metadata_Configuration(returnValue.Base_Directory + "\\config\\user\\sobekcm_qc.config");
+            }
+            else if (File.Exists(returnValue.Base_Directory + "\\config\\default\\sobekcm_qc.config"))
+            {
+                QualityControl_Configuration.Read_Metadata_Configuration(returnValue.Base_Directory + "\\config\\default\\sobekcm_qc.config");
+            }
+
             // Try to read the BRIEF ITEM MAPPING configuration file
             if (File.Exists(returnValue.Base_Directory + "\\config\\user\\sobekcm_brief_item_mapping.config"))
             {
@@ -112,11 +124,11 @@ namespace SobekCM.Engine_Library.Settings
             // Try to read the OAI-PMH configuration file
             if (File.Exists(returnValue.Base_Directory + "\\config\\user\\sobekcm_oaipmh.config"))
             {
-                returnValue.OAI_PMH = OAI_PMH_Configuration_Reader.Read_Config(returnValue.Base_Directory + "\\config\\user\\sobekcm_oaipmh.config");
+                returnValue.OAI_PMH = OAI_PMH_Configuration_Reader.Read_Config(returnValue.Base_Directory + "\\config\\user\\sobekcm_oaipmh.config", returnValue.System_Name, returnValue.System_Abbreviation, returnValue.System_Email);
             }
             else if (File.Exists(returnValue.Base_Directory + "\\config\\default\\sobekcm_oaipmh.config"))
             {
-                returnValue.OAI_PMH = OAI_PMH_Configuration_Reader.Read_Config(returnValue.Base_Directory + "\\config\\default\\sobekcm_oaipmh.config");
+                returnValue.OAI_PMH = OAI_PMH_Configuration_Reader.Read_Config(returnValue.Base_Directory + "\\config\\default\\sobekcm_oaipmh.config", returnValue.System_Name, returnValue.System_Abbreviation, returnValue.System_Email);
             }
 
             // Load the OAI-PMH configuration file info into the OAI writer class ( in the resource object library )
@@ -176,11 +188,11 @@ namespace SobekCM.Engine_Library.Settings
             // Try to read the OAI-PMH configuration file
             if (File.Exists(returnValue.Base_Directory + "\\config\\user\\sobekcm_oaipmh.config"))
             {
-                returnValue.OAI_PMH = OAI_PMH_Configuration_Reader.Read_Config(returnValue.Base_Directory + "\\config\\user\\sobekcm_oaipmh.config");
+                returnValue.OAI_PMH = OAI_PMH_Configuration_Reader.Read_Config(returnValue.Base_Directory + "\\config\\user\\sobekcm_oaipmh.config", returnValue.System_Name, returnValue.System_Abbreviation, returnValue.System_Email);
             }
             else if (File.Exists(returnValue.Base_Directory + "\\config\\default\\sobekcm_oaipmh.config"))
             {
-                returnValue.OAI_PMH = OAI_PMH_Configuration_Reader.Read_Config(returnValue.Base_Directory + "\\config\\default\\sobekcm_oaipmh.config");
+                returnValue.OAI_PMH = OAI_PMH_Configuration_Reader.Read_Config(returnValue.Base_Directory + "\\config\\default\\sobekcm_oaipmh.config", returnValue.System_Name, returnValue.System_Abbreviation, returnValue.System_Email);
             }
 
             // Load the OAI-PMH configuration file info into the OAI writer class ( in the resource object library )
@@ -201,6 +213,10 @@ namespace SobekCM.Engine_Library.Settings
             return returnValue;
         }
 
+        /// <summary> Refreshes the specified instance-wide settings object from the data pulled from the database </summary>
+        /// <param name="SettingsObject"> Instance-wide settings object to refresh </param>
+        /// <param name="SobekCM_Settings"> Setting information, from the database, to read into the settings object </param>
+        /// <returns> TRUE if successful, FALSE otherwise </returns>
         public static bool Refresh( InstanceWide_Settings SettingsObject, DataSet SobekCM_Settings )
         {
 
@@ -242,6 +258,7 @@ namespace SobekCM.Engine_Library.Settings
                 Get_String_Value(settingsDictionary, "Application Server Network", SettingsObject, X => X.Application_Server_Network, ref error);
                 Get_String_Value(settingsDictionary, "Application Server URL", SettingsObject, X => X.Application_Server_URL, ref error);
                 Get_String_Value(settingsDictionary, "Archive DropBox", SettingsObject, X => X.Archive_DropBox, ref error);
+                Get_Boolean_Value(settingsDictionary, "Builder Add PageTurner ItemViewer", SettingsObject, X => X.Builder_Add_PageTurner_ItemViewer, ref error, false);
                 Get_String_Value(settingsDictionary, "Builder IIS Logs Directory", SettingsObject, X => X.Builder_IIS_Logs_Directory, ref error);
                 Get_Integer_Value(settingsDictionary, "Builder Log Expiration in Days", SettingsObject, X => X.Builder_Log_Expiration_Days, ref error, 10);
                 Get_Integer_Value(settingsDictionary, "Builder Seconds Between Polls", SettingsObject, X => X.Builder_Seconds_Between_Polls, ref error, 60);
@@ -249,9 +266,11 @@ namespace SobekCM.Engine_Library.Settings
                 Get_Boolean_Value(settingsDictionary, "Builder Verbose Flag", SettingsObject, X => X.Builder_Verbose_Flag, ref error, false);
                 Get_String_Value(settingsDictionary, "Caching Server", SettingsObject, X => X.Caching_Server, ref error);
                 Get_Boolean_Value(settingsDictionary, "Can Remove Single Search Term", SettingsObject, X => X.Can_Remove_Single_Term, ref error, true);
-                Get_Boolean_Value(settingsDictionary, "Can Submit Edit Online", SettingsObject, X => X.Online_Edit_Submit_Enabled, ref error, false);
+                Get_Boolean_Value(settingsDictionary, "Can Submit Items Online", SettingsObject, X => X.Online_Item_Submit_Enabled, ref error, true);
                 Get_Boolean_Value(settingsDictionary, "Convert Office Files to PDF", SettingsObject, X => X.Convert_Office_Files_To_PDF, ref error, false);
                 Get_Boolean_Value(settingsDictionary, "Detailed User Permissions", SettingsObject, X => X.Detailed_User_Aggregation_Permissions, ref error, false);
+                Get_Boolean_Value(settingsDictionary, "Disable Standard User Logon Flag", SettingsObject, X => X.Disable_Standard_User_Logon_Flag, ref error, false);
+                Get_String_Value(settingsDictionary, "Disable Standard User Logon Message", SettingsObject, X => X.Disable_Standard_User_Logon_Message, ref error);
                 Get_String_Value(settingsDictionary, "Document Solr Index URL", SettingsObject, X => X.Document_Solr_Index_URL, ref error);
                 Get_String_Value(settingsDictionary, "Email Default From Address", SettingsObject, X => X.EmailDefaultFromAddress, ref error);
                 Get_String_Value(settingsDictionary, "Email Default From Name", SettingsObject, X => X.EmailDefaultFromDisplay, ref error);
@@ -335,6 +354,8 @@ namespace SobekCM.Engine_Library.Settings
                 }
 
 
+
+
                 // Save the metadata types
                 Set_Metadata_Types(SettingsObject, SobekCM_Settings.Tables[1]);
 
@@ -344,12 +365,14 @@ namespace SobekCM.Engine_Library.Settings
                 // This fills some dictionaries and such used for easy lookups
                 SettingsObject.PostUnSerialization();
 
+                // Ensure the base directory ends correctly
+                if ((!String.IsNullOrEmpty(SettingsObject.Application_Server_Network)) && (SettingsObject.Application_Server_Network[SettingsObject.Application_Server_Network.Length - 1] != '\\'))
+                    SettingsObject.Application_Server_Network = SettingsObject.Application_Server_Network + "\\";
 
                 return true;
             }
-            catch ( Exception ee )
+            catch
             {
-                return (ee.Message.Length > 0);
                 return false;
             }
         }
@@ -563,7 +586,7 @@ namespace SobekCM.Engine_Library.Settings
                             if (xmlReader.MoveToAttribute("type"))
                             {
                                 if (xmlReader.Value.ToLower() == "postgresql")
-                                    newDb.Database_Type = SobekCM_Database_Type_Enum.PostgreSQL;
+                                    newDb.Database_Type = EalDbTypeEnum.PostgreSQL;
                             }
                             if (xmlReader.MoveToAttribute("active"))
                             {

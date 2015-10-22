@@ -13,6 +13,7 @@ using SobekCM.Core.Aggregations;
 using SobekCM.Core.ApplicationState;
 using SobekCM.Core.Items;
 using SobekCM.Core.MemoryMgmt;
+using SobekCM.Core.MicroservicesClient;
 using SobekCM.Core.Navigation;
 using SobekCM.Core.Results;
 using SobekCM.Core.SiteMap;
@@ -75,7 +76,7 @@ namespace SobekCM
 			try
 			{
 				tracer = new Custom_Tracer();
-				tracer.Add_Trace("SobekCM_Page_Globals.Constructor", String.Empty);
+				tracer.Add_Trace("SobekCM_Page_Globals.Constructor", "Starting");
 			    SobekCM_Database.Connection_String = UI_ApplicationCache_Gateway.Settings.Database_Connections[0].Connection_String;
 
                 // If this is running on localhost, and in debug, set base directory to this one
@@ -84,6 +85,7 @@ namespace SobekCM
 			    {
 			        UI_ApplicationCache_Gateway.Settings.System_Base_URL = base_url;
 			        UI_ApplicationCache_Gateway.Settings.Base_URL = base_url;
+
 			    }
 #endif
 
@@ -91,6 +93,8 @@ namespace SobekCM
 			    if ( String.IsNullOrEmpty(UI_ApplicationCache_Gateway.Settings.Base_Directory))
 			    {
                     string baseDir = System.Web.HttpContext.Current.Server.MapPath("~");
+			        if ((baseDir.Length > 0) && (baseDir[baseDir.Length - 1] != '\\'))
+			            baseDir = baseDir + "\\";
                     UI_ApplicationCache_Gateway.Settings.Base_Directory = baseDir;
 
                     SobekCM_Database.Set_Setting("Application Server Network", baseDir);
@@ -122,6 +126,9 @@ namespace SobekCM
 			}
 			catch (Exception ee)
 			{
+                tracer.Add_Trace("SobekCM_Page_Globals.Constructor", "Exception caught around line 129: " + ee.Message);
+                tracer.Add_Trace("SobekCM_Page_Globals.Constructor", ee.StackTrace);
+
 				// Send to the dashboard
 				if ((HttpContext.Current.Request.UserHostAddress == "127.0.0.1") || (HttpContext.Current.Request.UserHostAddress == HttpContext.Current.Request.ServerVariables["LOCAL_ADDR"]) || (HttpContext.Current.Request.Url.ToString().IndexOf("localhost") >= 0))
 				{
@@ -171,13 +178,15 @@ namespace SobekCM
 				}
 			}
 
+            tracer.Add_Trace("SobekCM_Page_Globals.Constructor", "About to parse the URL for the navigation object");
+
 			// Analyze the response and get the mode
 			try
 			{
 			    currentMode = new Navigation_Object();
 			    NameValueCollection queryString = request.QueryString;
 
-			    SobekCM_QueryString_Analyzer.Parse_Query(queryString, currentMode, base_url, request.UserLanguages, UI_ApplicationCache_Gateway.Aggregations, UI_ApplicationCache_Gateway.Collection_Aliases, UI_ApplicationCache_Gateway.Items, UI_ApplicationCache_Gateway.URL_Portals, tracer);
+			    QueryString_Analyzer.Parse_Query(queryString, currentMode, base_url, request.UserLanguages, UI_ApplicationCache_Gateway.Aggregations, UI_ApplicationCache_Gateway.Collection_Aliases, UI_ApplicationCache_Gateway.Items, UI_ApplicationCache_Gateway.URL_Portals, UI_ApplicationCache_Gateway.WebContent_Hierarchy, tracer);
 
                 currentMode.Base_URL=base_url;
 			    currentMode.isPostBack = isPostBack;
@@ -186,13 +195,18 @@ namespace SobekCM
 
                 defaultSkin = currentMode.Skin;
 			}
-			catch
+			catch  ( Exception ee )
 			{
+                tracer.Add_Trace("SobekCM_Page_Globals.Constructor", "Exception caught around line 198: " + ee.Message);
+                tracer.Add_Trace("SobekCM_Page_Globals.Constructor", ee.StackTrace);
+
 				HttpContext.Current.Response.Status = "301 Moved Permanently";
 				HttpContext.Current.Response.AddHeader("Location", base_url);
 				HttpContext.Current.ApplicationInstance.CompleteRequest();
 				return;
 			}
+
+            tracer.Add_Trace("SobekCM_Page_Globals.Constructor", "Navigation parse completed");
 
 			// If this was for HTML, but was at the data, just convert to XML 
 			if ((page_name == "SOBEKCM_DATA") && (currentMode.Writer_Type != Writer_Type_Enum.XML) && (currentMode.Writer_Type != Writer_Type_Enum.JSON) && (currentMode.Writer_Type != Writer_Type_Enum.DataSet) && (currentMode.Writer_Type != Writer_Type_Enum.Data_Provider))
@@ -380,7 +394,7 @@ namespace SobekCM
 			}
 
 			// Browse are okay, except when it is the NEW
-			if ((CurrentModeCheck.Mode == Display_Mode_Enum.Aggregation) && (CurrentModeCheck.Aggregation_Type == Aggregation_Type_Enum.Browse_Info) && (CurrentModeCheck.Info_Browse_Mode == "new"))
+            if ((CurrentModeCheck.Mode == Display_Mode_Enum.Aggregation) && (CurrentModeCheck.Aggregation_Type == Aggregation_Type_Enum.Browse_Info) && (!String.IsNullOrEmpty(CurrentModeCheck.Info_Browse_Mode)) && (CurrentModeCheck.Info_Browse_Mode == "new"))
 			{
 				CurrentModeCheck.Info_Browse_Mode = "all";
 
@@ -480,7 +494,7 @@ namespace SobekCM
 						}
 						else if (url_relative_depth == 2)
 						{
-							if (url_relative_info[1] != "itemcount")
+							if (( url_relative_info != null ) && (url_relative_info.Length > 1 ) && ( url_relative_info[1] != "itemcount"))
 							{
 								HttpContext.Current.Response.Status = "301 Moved Permanently";
 								HttpContext.Current.Response.AddHeader("Location", UrlWriterHelper.Redirect_URL(CurrentModeCheck));
@@ -497,7 +511,7 @@ namespace SobekCM
 			if ((CurrentModeCheck.Mode == Display_Mode_Enum.Aggregation) && ((currentMode.Aggregation_Type == Aggregation_Type_Enum.Home) || (currentMode.Aggregation_Type == Aggregation_Type_Enum.Home_Edit)))
 			{
 				// Different code depending on if this is an aggregation or not
-				if ((CurrentModeCheck.Aggregation.Length == 0) || (CurrentModeCheck.Aggregation == "all"))
+				if (( String.IsNullOrEmpty(CurrentModeCheck.Aggregation)) || (CurrentModeCheck.Aggregation == "all"))
 				{
 					switch (CurrentModeCheck.Home_Type)
 					{
@@ -549,7 +563,8 @@ namespace SobekCM
 			// Ensure this is requesting the item without a viewercode and without extraneous information
 			if (CurrentModeCheck.Mode == Display_Mode_Enum.Item_Display)
 			{
-				if ((CurrentModeCheck.ViewerCode.Length > 0) || (url_relative_depth > 2))
+				if (( !String.IsNullOrEmpty(CurrentModeCheck.ViewerCode)) || (url_relative_depth > 2))
+
 				{
 					CurrentModeCheck.ViewerCode = String.Empty;
 
@@ -1019,7 +1034,9 @@ namespace SobekCM
 
 						HttpContext.Current.Response.StatusCode = 404;
 						HttpContext.Current.Response.Output.WriteLine("404 - INVALID URL");
-                        HttpContext.Current.Response.Output.WriteLine("Web skin indicated is invalid, default web skin invalid");
+                        HttpContext.Current.Response.Output.WriteLine("Web skin indicated is invalid, default web skin invalid - line 1029");
+
+				    HttpContext.Current.Response.Output.WriteLine(tracer.Text_Trace);
 						HttpContext.Current.ApplicationInstance.CompleteRequest();
 						currentMode.Request_Completed = true;
 
@@ -1155,6 +1172,15 @@ namespace SobekCM
 				currentMode.Mode = Display_Mode_Enum.Error;
 				return;
 			}
+
+            // IF this is display mode and this is a redirect, do the redirect
+		    if ((currentMode.Mode == Display_Mode_Enum.Simple_HTML_CMS) && (currentMode.WebContent_Type == WebContent_Type_Enum.Display) && (staticWebContent != null) && (!String.IsNullOrEmpty(staticWebContent.Redirect)))
+		    {
+                currentMode.Request_Completed = true;
+                HttpContext.Current.Response.Redirect(staticWebContent.Redirect, false);
+                HttpContext.Current.ApplicationInstance.CompleteRequest();
+                return;
+		    }
 
 			// If the web skin is indicated in the browse file, set that
 			if ( !String.IsNullOrEmpty(staticWebContent.Web_Skin))

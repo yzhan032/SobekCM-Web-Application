@@ -9,7 +9,6 @@ using System.Web.UI.WebControls;
 using SobekCM.Core.MemoryMgmt;
 using SobekCM.Core.Navigation;
 using SobekCM.Engine_Library.Database;
-using SobekCM.Engine_Library.Navigation;
 using SobekCM.Library.AdminViewer;
 using SobekCM.Library.MainWriters;
 using SobekCM.Library.MySobekViewer;
@@ -27,8 +26,8 @@ namespace SobekCM.Library.HTML
 	/// <remarks> This class extends the <see cref="abstractHtmlSubwriter"/> abstract class. <br /><br />
 	/// During a valid html request, the following steps occur:
 	/// <ul>
-	/// <li>Application state is built/verified by the <see cref="Application_State.Application_State_Builder"/> </li>
-	/// <li>Request is analyzed by the <see cref="Navigation.SobekCM_QueryString_Analyzer"/> and output as a <see cref="Navigation.SobekCM_Navigation_Object"/> </li>
+	/// <li>Application state is built/verified by the Application_State_Builder </li>
+	/// <li>Request is analyzed by the QueryString_Analyzer and output as a <see cref="Navigation_Object"/>  </li>
 	/// <li>Main writer is created for rendering the output, in his case the <see cref="Html_MainWriter"/> </li>
 	/// <li>The HTML writer will create this necessary subwriter since this action requires administrative rights. </li>
 	/// <li>This class will create a admin subwriter (extending <see cref="AdminViewer.abstract_AdminViewer"/> ) for the specified task.The admin subwriter creates an instance of this viewer to view and edit existing item aggregationPermissions in this digital library</li>
@@ -102,6 +101,26 @@ namespace SobekCM.Library.HTML
                     adminViewer = new Aliases_AdminViewer(RequestSpecificValues);
                     break;
 
+                case Admin_Type_Enum.WebContent_Add_New:
+                    adminViewer = new WebContent_Add_New_AdminViewer(RequestSpecificValues);
+                    break;
+
+                case Admin_Type_Enum.WebContent_Mgmt:
+                    adminViewer = new WebContent_Mgmt_AdminViewer(RequestSpecificValues);
+                    break;
+
+                case Admin_Type_Enum.WebContent_History:
+                    adminViewer = new WebContent_History_AdminViewer(RequestSpecificValues);
+                    break;
+
+                case Admin_Type_Enum.WebContent_Single:
+                    adminViewer = new WebContent_Single_AdminViewer(RequestSpecificValues);
+                    break;
+
+                case Admin_Type_Enum.WebContent_Usage:
+                    adminViewer = new WebContent_Usage_AdminViewer(RequestSpecificValues);
+                    break;
+
                 case Admin_Type_Enum.Wordmarks:
                     adminViewer = new Wordmarks_AdminViewer(RequestSpecificValues);
                     break;
@@ -136,7 +155,7 @@ namespace SobekCM.Library.HTML
                     break;
 
                 case Admin_Type_Enum.Default_Metadata:
-                    if (RequestSpecificValues.Current_Mode.My_Sobek_SubMode.Length > 1)
+                    if (( !String.IsNullOrEmpty(RequestSpecificValues.Current_Mode.My_Sobek_SubMode)) && ( RequestSpecificValues.Current_Mode.My_Sobek_SubMode.Length > 1 ))
                     {
                         string project_code = RequestSpecificValues.Current_Mode.My_Sobek_SubMode.Substring(1);
                         RequestSpecificValues.Tracer.Add_Trace("MySobek_HtmlSubwriter.Constructor", "Checking cache for valid project file");
@@ -216,7 +235,11 @@ namespace SobekCM.Library.HTML
 				if (RequestSpecificValues.Current_User == null)
 					return false;
 
-                if ((RequestSpecificValues.Current_Mode.Admin_Type == Admin_Type_Enum.Wordmarks) || (RequestSpecificValues.Current_Mode.Admin_Type == Admin_Type_Enum.Aggregation_Single) || (RequestSpecificValues.Current_Mode.Admin_Type == Admin_Type_Enum.Skins_Single) || (RequestSpecificValues.Current_Mode.Admin_Type == Admin_Type_Enum.Add_Collection_Wizard))
+                if ((RequestSpecificValues.Current_Mode.Admin_Type == Admin_Type_Enum.Wordmarks) || 
+                    (RequestSpecificValues.Current_Mode.Admin_Type == Admin_Type_Enum.Aggregation_Single) || 
+                    (RequestSpecificValues.Current_Mode.Admin_Type == Admin_Type_Enum.Skins_Single) || 
+                    (RequestSpecificValues.Current_Mode.Admin_Type == Admin_Type_Enum.Add_Collection_Wizard) || 
+                    (RequestSpecificValues.Current_Mode.Admin_Type == Admin_Type_Enum.WebContent_Single))
 					return true;
 
 
@@ -265,7 +288,7 @@ namespace SobekCM.Library.HTML
                 if ((RequestSpecificValues.Current_Mode.Admin_Type != Admin_Type_Enum.Aggregation_Single) && (RequestSpecificValues.Current_Mode.Admin_Type != Admin_Type_Enum.Skins_Single) && (RequestSpecificValues.Current_Mode.Admin_Type != Admin_Type_Enum.Add_Collection_Wizard))
                 {
                     // Add the banner
-                    Add_Banner(Output, "sbkAhs_BannerDiv", RequestSpecificValues.Current_Mode, RequestSpecificValues.HTML_Skin, RequestSpecificValues.Hierarchy_Object);
+                    Add_Banner(Output, "sbkAhs_BannerDiv", WebPage_Title.Replace("{0} ",""), RequestSpecificValues.Current_Mode, RequestSpecificValues.HTML_Skin, RequestSpecificValues.Hierarchy_Object);
 
                     // Add the RequestSpecificValues.Current_User-specific main menu
                     MainMenus_Helper_HtmlSubWriter.Add_UserSpecific_Main_Menu(Output, RequestSpecificValues );
@@ -275,7 +298,7 @@ namespace SobekCM.Library.HTML
                     Output.WriteLine("<br />");
 
                     // Add the box with the title
-                    if ((RequestSpecificValues.Current_Mode.My_Sobek_Type != My_Sobek_Type_Enum.Folder_Management) || (RequestSpecificValues.Current_Mode.My_Sobek_SubMode != "submitted items"))
+                    if (((RequestSpecificValues.Current_Mode.My_Sobek_Type != My_Sobek_Type_Enum.Folder_Management) || (RequestSpecificValues.Current_Mode.My_Sobek_SubMode != "submitted items")) && ( RequestSpecificValues.Current_Mode.Admin_Type != Admin_Type_Enum.WebContent_Single ))
                     {
                         // Add the title
                         Output.WriteLine("<div class=\"sbkAdm_TitleDiv sbkAdm_TitleDivBorder\">");
@@ -298,8 +321,8 @@ namespace SobekCM.Library.HTML
                             Admin_Type_Enum adminType = RequestSpecificValues.Current_Mode.Admin_Type;
                             ushort page = RequestSpecificValues.Current_Mode.Page.HasValue ? RequestSpecificValues.Current_Mode.Page.Value : ((ushort) 1);
                             string browse_code = RequestSpecificValues.Current_Mode.Info_Browse_Mode;
-                            string aggregation = RequestSpecificValues.Current_Mode.Aggregation;
-                            string mySobekMode = RequestSpecificValues.Current_Mode.My_Sobek_SubMode;
+                            //string aggregation = RequestSpecificValues.Current_Mode.Aggregation;
+                            //string mySobekMode = RequestSpecificValues.Current_Mode.My_Sobek_SubMode;
 
                             // Get the URL for the home page
                             RequestSpecificValues.Current_Mode.Mode = Display_Mode_Enum.Aggregation;
@@ -332,6 +355,10 @@ namespace SobekCM.Library.HTML
                                 Output.WriteLine("  " + adminViewer.Web_Title);
                                 Output.WriteLine("</div>"); 
                             }
+
+                            RequestSpecificValues.Current_Mode.Page = page;
+                            RequestSpecificValues.Current_Mode.Info_Browse_Mode = browse_code;
+                            
                         }
                     }
                 }
@@ -367,7 +394,7 @@ namespace SobekCM.Library.HTML
                 // Start to build the result to write, with the banner
                 StringBuilder header_builder = new StringBuilder();
                 StringWriter header_writer = new StringWriter(header_builder);
-                Add_Banner(header_writer, "sbkAhs_BannerDiv", RequestSpecificValues.Current_Mode, RequestSpecificValues.HTML_Skin, RequestSpecificValues.Hierarchy_Object);
+                Add_Banner(header_writer, "sbkAhs_BannerDiv", WebPage_Title.Replace("{0} ", ""), RequestSpecificValues.Current_Mode, RequestSpecificValues.HTML_Skin, RequestSpecificValues.Hierarchy_Object);
 
                 // Now, add this literal
                 LiteralControl header_literal = new LiteralControl(header_builder.ToString());
@@ -406,13 +433,13 @@ namespace SobekCM.Library.HTML
             }
 
             // If editing projects, add the mySobek stylesheet as well
-            if ((RequestSpecificValues.Current_Mode.Admin_Type == Admin_Type_Enum.Default_Metadata) && (RequestSpecificValues.Current_Mode.My_Sobek_SubMode.Length > 0))
+            if ((RequestSpecificValues.Current_Mode.Admin_Type == Admin_Type_Enum.Default_Metadata) && ( !String.IsNullOrEmpty(RequestSpecificValues.Current_Mode.My_Sobek_SubMode)))
             {
                 Output.WriteLine("  <link href=\"" + Static_Resources.Sobekcm_Metadata_Css + "\" rel=\"stylesheet\" type=\"text/css\" />");
             }
 
 			// Add the uploader libraries if editing an item
-            if ((RequestSpecificValues.Current_Mode.Admin_Type == Admin_Type_Enum.Aggregation_Single) || (RequestSpecificValues.Current_Mode.Admin_Type == Admin_Type_Enum.Wordmarks) || (RequestSpecificValues.Current_Mode.Admin_Type == Admin_Type_Enum.Skins_Single) || (RequestSpecificValues.Current_Mode.Admin_Type == Admin_Type_Enum.Add_Collection_Wizard))
+            if ((RequestSpecificValues.Current_Mode.Admin_Type == Admin_Type_Enum.Aggregation_Single) || (RequestSpecificValues.Current_Mode.Admin_Type == Admin_Type_Enum.Wordmarks) || (RequestSpecificValues.Current_Mode.Admin_Type == Admin_Type_Enum.Skins_Single) || (RequestSpecificValues.Current_Mode.Admin_Type == Admin_Type_Enum.Add_Collection_Wizard) || (RequestSpecificValues.Current_Mode.Admin_Type == Admin_Type_Enum.WebContent_Single))
 	        {
                 Output.WriteLine("  <script src=\"" + Static_Resources.Jquery_Uploadifive_Js + "\" type=\"text/javascript\"></script>");
                 Output.WriteLine("  <script src=\"" + Static_Resources.Jquery_Uploadify_Js + "\" type=\"text/javascript\"></script>");
@@ -475,7 +502,16 @@ namespace SobekCM.Library.HTML
                         break;
 
                     case Admin_Type_Enum.User_Permissions_Reports:
+                    case Admin_Type_Enum.WebContent_Mgmt:
                         return "sbkUpav_ContainerInner";
+
+                    case Admin_Type_Enum.WebContent_History:
+                    case Admin_Type_Enum.WebContent_Usage:
+                        return "sbkWcav2_ContainerInner";
+
+                    case Admin_Type_Enum.WebContent_Single:
+                    case Admin_Type_Enum.WebContent_Add_New:
+                        return "sbkWcav_ContainerInner";
 				}
 				return base.Container_CssClass;
 			}

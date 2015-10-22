@@ -132,13 +132,13 @@ namespace SobekCM.Engine_Library.Items
 				{
 					newIcon.Title = thisIconRow["Icon_Name"].ToString();
 					newIcon.Link = thisIconRow["Link"].ToString();
-					newIcon.HTML = "<img class=\"SobekItemWordmark\" src=\"<%BASEURL%>design/wordmarks/" + thisIconRow["Icon_URL"].ToString().Replace("&","&amp;") + "\" title=\"" + newIcon.Title.Replace("&", "&amp;").Replace("\"", "&quot;") + "\" alt=\"" + newIcon.Title.Replace("&", "&amp;").Replace("\"", "&quot;") + "\" />";
+					newIcon.HTML = "<img class=\"SobekItemWordmark\" src=\"<%BASEURL%>design/wordmarks/" + thisIconRow["Icon_URL"].ToString().Replace("&","&amp;") + "\" alt=\"" + newIcon.Title.Replace("&", "&amp;").Replace("\"", "&quot;") + "\" />";
 				}
 				else
 				{
 					newIcon.Title = thisIconRow["Icon_Name"].ToString();
 					newIcon.Link = thisIconRow["Link"].ToString();
-					newIcon.HTML = "<a href=\"" + newIcon.Link + "\" target=\"_blank\"><img class=\"SobekItemWordmark\" src=\"<%BASEURL%>design/wordmarks/" + thisIconRow["Icon_URL"].ToString().Replace("&", "&amp;").Replace("\"", "&quot;") + "\" title=\"" + newIcon.Title.Replace("&", "&amp;").Replace("\"", "&quot;") + "\" alt=\"" + newIcon.Title.Replace("&", "&amp;").Replace("\"", "&quot;") + "\" /></a>";
+					newIcon.HTML = "<a href=\"" + newIcon.Link + "\" target=\"_blank\"><img class=\"SobekItemWordmark\" src=\"<%BASEURL%>design/wordmarks/" + thisIconRow["Icon_URL"].ToString().Replace("&", "&amp;").Replace("\"", "&quot;") + "\" alt=\"" + newIcon.Title.Replace("&", "&amp;").Replace("\"", "&quot;") + "\" /></a>";
 				}
 				Item_Group_Object.Behaviors.Add_Wordmark(newIcon);
 			}
@@ -212,13 +212,14 @@ namespace SobekCM.Engine_Library.Items
 			}
 		}
 
-		/// <summary> Builds a digital resource for a single volume within a title </summary>
-		/// <param name="BibID"> Bibliographic identifier for the title </param>
-		/// <param name="VID"> Volume identifier for the title </param>
-		/// <param name="Icon_Dictionary"> Dictionary of information about every wordmark/icon in this digital library, used to build the HTML for the icons linked to this digital resource</param>
-		/// <param name="Tracer"> Trace object keeps a list of each method executed and important milestones in rendering</param>
-		/// <returns> Fully built version of a digital resource </returns>
-		public SobekCM_Item Build_Item(string BibID, string VID, Dictionary<string, Wordmark_Icon> Icon_Dictionary, List<string> Item_Viewer_Priority, Custom_Tracer Tracer)
+	    /// <summary> Builds a digital resource for a single volume within a title </summary>
+	    /// <param name="BibID"> Bibliographic identifier for the title </param>
+	    /// <param name="VID"> Volume identifier for the title </param>
+	    /// <param name="Icon_Dictionary"> Dictionary of information about every wordmark/icon in this digital library, used to build the HTML for the icons linked to this digital resource</param>
+        /// <param name="Item_Viewer_Priority"> List of the globally defined item viewer priorities </param>
+	    /// <param name="Tracer"> Trace object keeps a list of each method executed and important milestones in rendering</param>
+	    /// <returns> Fully built version of a digital resource </returns>
+	    public SobekCM_Item Build_Item(string BibID, string VID, Dictionary<string, Wordmark_Icon> Icon_Dictionary, List<string> Item_Viewer_Priority, Custom_Tracer Tracer)
 		{
 			if (Tracer != null)
 				{
@@ -289,14 +290,15 @@ namespace SobekCM.Engine_Library.Items
 			}
 		}
 
-		/// <summary> Builds a digital resource for a single volume within a title </summary>
-		/// <param name="BibID"> Bibliographic identifier for the title </param>
-		/// <param name="VID"> Volume identifier for the title </param>
-		/// <param name="METS_Location"> Location of the METS file to read </param>
-		/// <param name="Icon_Dictionary"> Dictionary of information about every wordmark/icon in this digital library, used to build the HTML for the icons linked to this digital resource</param>
-		/// <param name="Tracer"> Trace object keeps a list of each method executed and important milestones in rendering</param>
-		/// <returns> Fully built version of a digital resource </returns>
-		public SobekCM_Item Build_Item(string METS_Location, string BibID, String VID, Dictionary<string, Wordmark_Icon> Icon_Dictionary, List<string> Item_Viewer_Priority, Custom_Tracer Tracer)
+	    /// <summary> Builds a digital resource for a single volume within a title </summary>
+	    /// <param name="BibID"> Bibliographic identifier for the title </param>
+	    /// <param name="VID"> Volume identifier for the title </param>
+	    /// <param name="METS_Location"> Location of the METS file to read </param>
+	    /// <param name="Icon_Dictionary"> Dictionary of information about every wordmark/icon in this digital library, used to build the HTML for the icons linked to this digital resource</param>
+        /// <param name="Item_Viewer_Priority">  List of the globally defined item viewer priorities  </param>
+	    /// <param name="Tracer"> Trace object keeps a list of each method executed and important milestones in rendering</param>
+	    /// <returns> Fully built version of a digital resource </returns>
+	    public SobekCM_Item Build_Item(string METS_Location, string BibID, String VID, Dictionary<string, Wordmark_Icon> Icon_Dictionary, List<string> Item_Viewer_Priority, Custom_Tracer Tracer)
 		{
 			if (Tracer != null)
 			{
@@ -401,178 +403,180 @@ namespace SobekCM.Engine_Library.Items
            
 			Tracer.Add_Trace("SobekCM_METS_Based_ItemBuilder.Finish_Building_Item", "Load the data from the database into the resource object");
 
-			if ((DatabaseInfo == null) || (DatabaseInfo.Tables[2] == null) || (DatabaseInfo.Tables[2].Rows.Count == 0))
-			{
-				Tracer.Add_Trace("SobekCM_METS_Based_ItemBuilder.Finish_Building_Item", "Invalid data from the database, either not enough tables, or no rows in Tables[2]");
-			}
-
-			// Copy over some basic values
-			DataRow mainItemRow = DatabaseInfo.Tables[2].Rows[0];
-			Package_To_Finalize.Behaviors.Set_Primary_Identifier(mainItemRow["Primary_Identifier_Type"].ToString(), mainItemRow["Primary_Identifier"].ToString());
-			Package_To_Finalize.Behaviors.GroupTitle = mainItemRow["GroupTitle"].ToString();
-			Package_To_Finalize.Behaviors.GroupType = mainItemRow["GroupType"].ToString();
-			Package_To_Finalize.Web.File_Root = mainItemRow["File_Location"].ToString();
-			Package_To_Finalize.Web.AssocFilePath = mainItemRow["File_Location"] + "\\" + Package_To_Finalize.VID + "\\";
-			Package_To_Finalize.Behaviors.IP_Restriction_Membership = Convert.ToInt16(mainItemRow["IP_Restriction_Mask"]);             
-			Package_To_Finalize.Behaviors.CheckOut_Required = Convert.ToBoolean(mainItemRow["CheckoutRequired"]);
-			Package_To_Finalize.Behaviors.Text_Searchable = Convert.ToBoolean(mainItemRow["TextSearchable"]);
-			Package_To_Finalize.Web.ItemID = Convert.ToInt32(mainItemRow["ItemID"]);
-			Package_To_Finalize.Web.GroupID = Convert.ToInt32(mainItemRow["GroupID"]);
-			Package_To_Finalize.Behaviors.Suppress_Endeca = Convert.ToBoolean(mainItemRow["SuppressEndeca"]);
-			//Package_To_Finalize.Behaviors.Expose_Full_Text_For_Harvesting = Convert.ToBoolean(mainItemRow["SuppressEndeca"]);
-			Package_To_Finalize.Tracking.Internal_Comments = mainItemRow["Comments"].ToString();
-			Package_To_Finalize.Behaviors.Dark_Flag = Convert.ToBoolean(mainItemRow["Dark"]);
-			Package_To_Finalize.Tracking.Born_Digital = Convert.ToBoolean(mainItemRow["Born_Digital"]);
-			Package_To_Finalize.Behaviors.Main_Thumbnail = mainItemRow["MainThumbnail"].ToString();
-			//Package_To_Finalize.Divisions.Page_Count = Convert.ToInt32(mainItemRow["Pages"]);
-			if (mainItemRow["Disposition_Advice"] != DBNull.Value)
-				Package_To_Finalize.Tracking.Disposition_Advice = Convert.ToInt16(mainItemRow["Disposition_Advice"]);
-			else
-				Package_To_Finalize.Tracking.Disposition_Advice = -1;
-			if (mainItemRow["Material_Received_Date"] != DBNull.Value)
-				Package_To_Finalize.Tracking.Material_Received_Date = Convert.ToDateTime(mainItemRow["Material_Received_Date"]);
-			else
-				Package_To_Finalize.Tracking.Material_Received_Date = null;
-			if (mainItemRow["Material_Recd_Date_Estimated"] != DBNull.Value)
-				Package_To_Finalize.Tracking.Material_Rec_Date_Estimated = Convert.ToBoolean(mainItemRow["Material_Recd_Date_Estimated"]);
-			if (DatabaseInfo.Tables[2].Columns.Contains("Tracking_Box"))
-			{
-				if (mainItemRow["Tracking_Box"] != DBNull.Value)
-					Package_To_Finalize.Tracking.Tracking_Box= mainItemRow["Tracking_Box"].ToString();
-			}
-
-			// Set more of the sobekcm web portions in the item 
-			Package_To_Finalize.Web.Set_BibID_VID(Package_To_Finalize.BibID, Package_To_Finalize.VID);
-            Package_To_Finalize.Web.Image_Root = Engine_ApplicationCache_Gateway.Settings.Image_URL;
-			if (Multiple)
-				Package_To_Finalize.Web.Siblings = 2;
-
-			// Set the serial hierarchy from the database (if multiple)
-			if ((Multiple) && (mainItemRow["Level1_Text"].ToString().Length > 0))
-			{
-				Tracer.Add_Trace("SobekCM_METS_Based_ItemBuilder.Finish_Building_Item", "Assigning serial hierarchy from the database info");
-
-				bool found = false;
-
-				// Get the values from the database first
-				string level1_text = mainItemRow["Level1_Text"].ToString();
-				string level2_text = mainItemRow["Level2_Text"].ToString();
-				string level3_text = mainItemRow["Level3_Text"].ToString();
-				int level1_index = Convert.ToInt32(mainItemRow["Level1_Index"]);
-				int level2_index = Convert.ToInt32(mainItemRow["Level2_Index"]);
-				int level3_index = Convert.ToInt32(mainItemRow["Level3_Index"]);
-
-				// Does this match the enumeration
-				if (level1_text.ToUpper().Trim() == Package_To_Finalize.Bib_Info.Series_Part_Info.Enum1.ToUpper().Trim())
-				{
-					// Copy the database values to the enumeration portion
-					Package_To_Finalize.Bib_Info.Series_Part_Info.Enum1 = level1_text;
-					Package_To_Finalize.Bib_Info.Series_Part_Info.Enum1_Index = level1_index;
-					Package_To_Finalize.Bib_Info.Series_Part_Info.Enum2 = level2_text;
-					Package_To_Finalize.Bib_Info.Series_Part_Info.Enum2_Index = level2_index;
-					Package_To_Finalize.Bib_Info.Series_Part_Info.Enum3 = level3_text;
-					Package_To_Finalize.Bib_Info.Series_Part_Info.Enum3_Index = level3_index;
-					found = true;
-				}
-
-				// Does this match the chronology
-				if ((!found) && (level1_text.ToUpper().Trim() == Package_To_Finalize.Bib_Info.Series_Part_Info.Year.ToUpper().Trim()))
-				{
-					// Copy the database values to the chronology portion
-					Package_To_Finalize.Bib_Info.Series_Part_Info.Year = level1_text;
-					Package_To_Finalize.Bib_Info.Series_Part_Info.Year_Index = level1_index;
-					Package_To_Finalize.Bib_Info.Series_Part_Info.Month = level2_text;
-					Package_To_Finalize.Bib_Info.Series_Part_Info.Month_Index = level2_index;
-					Package_To_Finalize.Bib_Info.Series_Part_Info.Day = level3_text;
-					Package_To_Finalize.Bib_Info.Series_Part_Info.Day_Index = level3_index;
-					found = true;
-				}
-
-				if (!found)
-				{
-					// No match.  If it is numeric, move it to the chronology, otherwise, enumeration
-					bool charFound = level1_text.Trim().Any(ThisChar => !Char.IsNumber(ThisChar));
-
-					if (charFound)
-					{
-						// Copy the database values to the enumeration portion
-						Package_To_Finalize.Bib_Info.Series_Part_Info.Enum1 = level1_text;
-						Package_To_Finalize.Bib_Info.Series_Part_Info.Enum1_Index = level1_index;
-						Package_To_Finalize.Bib_Info.Series_Part_Info.Enum2 = level2_text;
-						Package_To_Finalize.Bib_Info.Series_Part_Info.Enum2_Index = level2_index;
-						Package_To_Finalize.Bib_Info.Series_Part_Info.Enum3 = level3_text;
-						Package_To_Finalize.Bib_Info.Series_Part_Info.Enum3_Index = level3_index;
-					}
-					else
-					{
-						// Copy the database values to the chronology portion
-						Package_To_Finalize.Bib_Info.Series_Part_Info.Year = level1_text;
-						Package_To_Finalize.Bib_Info.Series_Part_Info.Year_Index = level1_index;
-						Package_To_Finalize.Bib_Info.Series_Part_Info.Month = level2_text;
-						Package_To_Finalize.Bib_Info.Series_Part_Info.Month_Index = level2_index;
-						Package_To_Finalize.Bib_Info.Series_Part_Info.Day = level3_text;
-						Package_To_Finalize.Bib_Info.Series_Part_Info.Day_Index = level3_index;
-					}
-				}
-
-				// Copy the database values to the simple serial portion (used to actually determine serial heirarchy)
-				Package_To_Finalize.Behaviors.Serial_Info.Clear();
-				Package_To_Finalize.Behaviors.Serial_Info.Add_Hierarchy(1, level1_index, level1_text);
-				if (level2_text.Length > 0)
-				{
-					Package_To_Finalize.Behaviors.Serial_Info.Add_Hierarchy(2, level2_index, level2_text);
-					if (level3_text.Length > 0)
-					{
-						Package_To_Finalize.Behaviors.Serial_Info.Add_Hierarchy(3, level3_index, level3_text);
-					}
-				}
-			}
-
-			// See if this can be described
-			bool can_describe = false;
-			foreach (DataRow thisRow in DatabaseInfo.Tables[1].Rows)
-			{
-				int thisAggregationValue = Convert.ToInt16(thisRow["Items_Can_Be_Described"]);
-				if (thisAggregationValue == 0)
-				{
-					can_describe = false;
-					break;
-				}
-				if (thisAggregationValue == 2)
-				{
-					can_describe = true;
-				}
-			}
-			Package_To_Finalize.Behaviors.Can_Be_Described = can_describe;
-
-            // Look for rights information to add
-            if (mainItemRow["EmbargoEnd"] != DBNull.Value)
+		    if ((DatabaseInfo == null) || (DatabaseInfo.Tables[2] == null) || (DatabaseInfo.Tables[2].Rows.Count == 0))
 		    {
-		        try
+		        Tracer.Add_Trace("SobekCM_METS_Based_ItemBuilder.Finish_Building_Item", "Invalid data from the database, either not enough tables, or no rows in Tables[2]");
+		    }
+		    else
+		    {
+		        // Copy over some basic values
+		        DataRow mainItemRow = DatabaseInfo.Tables[2].Rows[0];
+		        Package_To_Finalize.Behaviors.Set_Primary_Identifier(mainItemRow["Primary_Identifier_Type"].ToString(), mainItemRow["Primary_Identifier"].ToString());
+		        Package_To_Finalize.Behaviors.GroupTitle = mainItemRow["GroupTitle"].ToString();
+		        Package_To_Finalize.Behaviors.GroupType = mainItemRow["GroupType"].ToString();
+		        Package_To_Finalize.Web.File_Root = mainItemRow["File_Location"].ToString();
+		        Package_To_Finalize.Web.AssocFilePath = mainItemRow["File_Location"] + "\\" + Package_To_Finalize.VID + "\\";
+		        Package_To_Finalize.Behaviors.IP_Restriction_Membership = Convert.ToInt16(mainItemRow["IP_Restriction_Mask"]);
+		        Package_To_Finalize.Behaviors.CheckOut_Required = Convert.ToBoolean(mainItemRow["CheckoutRequired"]);
+		        Package_To_Finalize.Behaviors.Text_Searchable = Convert.ToBoolean(mainItemRow["TextSearchable"]);
+		        Package_To_Finalize.Web.ItemID = Convert.ToInt32(mainItemRow["ItemID"]);
+		        Package_To_Finalize.Web.GroupID = Convert.ToInt32(mainItemRow["GroupID"]);
+		        Package_To_Finalize.Behaviors.Suppress_Endeca = Convert.ToBoolean(mainItemRow["SuppressEndeca"]);
+		        //Package_To_Finalize.Behaviors.Expose_Full_Text_For_Harvesting = Convert.ToBoolean(mainItemRow["SuppressEndeca"]);
+		        Package_To_Finalize.Tracking.Internal_Comments = mainItemRow["Comments"].ToString();
+		        Package_To_Finalize.Behaviors.Dark_Flag = Convert.ToBoolean(mainItemRow["Dark"]);
+		        Package_To_Finalize.Tracking.Born_Digital = Convert.ToBoolean(mainItemRow["Born_Digital"]);
+		        Package_To_Finalize.Behaviors.Main_Thumbnail = mainItemRow["MainThumbnail"].ToString();
+		        //Package_To_Finalize.Divisions.Page_Count = Convert.ToInt32(mainItemRow["Pages"]);
+		        if (mainItemRow["Disposition_Advice"] != DBNull.Value)
+		            Package_To_Finalize.Tracking.Disposition_Advice = Convert.ToInt16(mainItemRow["Disposition_Advice"]);
+		        else
+		            Package_To_Finalize.Tracking.Disposition_Advice = -1;
+		        if (mainItemRow["Material_Received_Date"] != DBNull.Value)
+		            Package_To_Finalize.Tracking.Material_Received_Date = Convert.ToDateTime(mainItemRow["Material_Received_Date"]);
+		        else
+		            Package_To_Finalize.Tracking.Material_Received_Date = null;
+		        if (mainItemRow["Material_Recd_Date_Estimated"] != DBNull.Value)
+		            Package_To_Finalize.Tracking.Material_Rec_Date_Estimated = Convert.ToBoolean(mainItemRow["Material_Recd_Date_Estimated"]);
+		        if (DatabaseInfo.Tables[2].Columns.Contains("Tracking_Box"))
 		        {
-		            DateTime embargoEnd = DateTime.Parse(mainItemRow["EmbargoEnd"].ToString());
-                    string origAccessCode = mainItemRow["Original_AccessCode"].ToString();
-
-                    // Is there already a RightsMD module in the item?
-                    // Ensure this metadata module extension exists
-                    RightsMD_Info rightsInfo = Package_To_Finalize.Get_Metadata_Module(GlobalVar.PALMM_RIGHTSMD_METADATA_MODULE_KEY) as RightsMD_Info;
-                    if (rightsInfo == null)
-                    {
-                        rightsInfo = new RightsMD_Info();
-                        Package_To_Finalize.Add_Metadata_Module(GlobalVar.PALMM_RIGHTSMD_METADATA_MODULE_KEY, rightsInfo);
-                    }
-
-                    // Add the data
-		            rightsInfo.Access_Code_String = origAccessCode;
-		            rightsInfo.Embargo_End = embargoEnd;
+		            if (mainItemRow["Tracking_Box"] != DBNull.Value)
+		                Package_To_Finalize.Tracking.Tracking_Box = mainItemRow["Tracking_Box"].ToString();
 		        }
-		        catch (Exception)
+
+		        // Set more of the sobekcm web portions in the item 
+		        Package_To_Finalize.Web.Set_BibID_VID(Package_To_Finalize.BibID, Package_To_Finalize.VID);
+		        Package_To_Finalize.Web.Image_Root = Engine_ApplicationCache_Gateway.Settings.Image_URL;
+		        if (Multiple)
+		            Package_To_Finalize.Web.Siblings = 2;
+
+		        // Set the serial hierarchy from the database (if multiple)
+		        if ((Multiple) && (mainItemRow["Level1_Text"].ToString().Length > 0))
 		        {
-		            
+		            Tracer.Add_Trace("SobekCM_METS_Based_ItemBuilder.Finish_Building_Item", "Assigning serial hierarchy from the database info");
+
+		            bool found = false;
+
+		            // Get the values from the database first
+		            string level1_text = mainItemRow["Level1_Text"].ToString();
+		            string level2_text = mainItemRow["Level2_Text"].ToString();
+		            string level3_text = mainItemRow["Level3_Text"].ToString();
+		            int level1_index = Convert.ToInt32(mainItemRow["Level1_Index"]);
+		            int level2_index = Convert.ToInt32(mainItemRow["Level2_Index"]);
+		            int level3_index = Convert.ToInt32(mainItemRow["Level3_Index"]);
+
+		            // Does this match the enumeration
+		            if (level1_text.ToUpper().Trim() == Package_To_Finalize.Bib_Info.Series_Part_Info.Enum1.ToUpper().Trim())
+		            {
+		                // Copy the database values to the enumeration portion
+		                Package_To_Finalize.Bib_Info.Series_Part_Info.Enum1 = level1_text;
+		                Package_To_Finalize.Bib_Info.Series_Part_Info.Enum1_Index = level1_index;
+		                Package_To_Finalize.Bib_Info.Series_Part_Info.Enum2 = level2_text;
+		                Package_To_Finalize.Bib_Info.Series_Part_Info.Enum2_Index = level2_index;
+		                Package_To_Finalize.Bib_Info.Series_Part_Info.Enum3 = level3_text;
+		                Package_To_Finalize.Bib_Info.Series_Part_Info.Enum3_Index = level3_index;
+		                found = true;
+		            }
+
+		            // Does this match the chronology
+		            if ((!found) && (level1_text.ToUpper().Trim() == Package_To_Finalize.Bib_Info.Series_Part_Info.Year.ToUpper().Trim()))
+		            {
+		                // Copy the database values to the chronology portion
+		                Package_To_Finalize.Bib_Info.Series_Part_Info.Year = level1_text;
+		                Package_To_Finalize.Bib_Info.Series_Part_Info.Year_Index = level1_index;
+		                Package_To_Finalize.Bib_Info.Series_Part_Info.Month = level2_text;
+		                Package_To_Finalize.Bib_Info.Series_Part_Info.Month_Index = level2_index;
+		                Package_To_Finalize.Bib_Info.Series_Part_Info.Day = level3_text;
+		                Package_To_Finalize.Bib_Info.Series_Part_Info.Day_Index = level3_index;
+		                found = true;
+		            }
+
+		            if (!found)
+		            {
+		                // No match.  If it is numeric, move it to the chronology, otherwise, enumeration
+		                bool charFound = level1_text.Trim().Any(ThisChar => !Char.IsNumber(ThisChar));
+
+		                if (charFound)
+		                {
+		                    // Copy the database values to the enumeration portion
+		                    Package_To_Finalize.Bib_Info.Series_Part_Info.Enum1 = level1_text;
+		                    Package_To_Finalize.Bib_Info.Series_Part_Info.Enum1_Index = level1_index;
+		                    Package_To_Finalize.Bib_Info.Series_Part_Info.Enum2 = level2_text;
+		                    Package_To_Finalize.Bib_Info.Series_Part_Info.Enum2_Index = level2_index;
+		                    Package_To_Finalize.Bib_Info.Series_Part_Info.Enum3 = level3_text;
+		                    Package_To_Finalize.Bib_Info.Series_Part_Info.Enum3_Index = level3_index;
+		                }
+		                else
+		                {
+		                    // Copy the database values to the chronology portion
+		                    Package_To_Finalize.Bib_Info.Series_Part_Info.Year = level1_text;
+		                    Package_To_Finalize.Bib_Info.Series_Part_Info.Year_Index = level1_index;
+		                    Package_To_Finalize.Bib_Info.Series_Part_Info.Month = level2_text;
+		                    Package_To_Finalize.Bib_Info.Series_Part_Info.Month_Index = level2_index;
+		                    Package_To_Finalize.Bib_Info.Series_Part_Info.Day = level3_text;
+		                    Package_To_Finalize.Bib_Info.Series_Part_Info.Day_Index = level3_index;
+		                }
+		            }
+
+		            // Copy the database values to the simple serial portion (used to actually determine serial heirarchy)
+		            Package_To_Finalize.Behaviors.Serial_Info.Clear();
+		            Package_To_Finalize.Behaviors.Serial_Info.Add_Hierarchy(1, level1_index, level1_text);
+		            if (level2_text.Length > 0)
+		            {
+		                Package_To_Finalize.Behaviors.Serial_Info.Add_Hierarchy(2, level2_index, level2_text);
+		                if (level3_text.Length > 0)
+		                {
+		                    Package_To_Finalize.Behaviors.Serial_Info.Add_Hierarchy(3, level3_index, level3_text);
+		                }
+		            }
+		        }
+
+		        // See if this can be described
+		        bool can_describe = false;
+		        foreach (DataRow thisRow in DatabaseInfo.Tables[1].Rows)
+		        {
+		            int thisAggregationValue = Convert.ToInt16(thisRow["Items_Can_Be_Described"]);
+		            if (thisAggregationValue == 0)
+		            {
+		                can_describe = false;
+		                break;
+		            }
+		            if (thisAggregationValue == 2)
+		            {
+		                can_describe = true;
+		            }
+		        }
+		        Package_To_Finalize.Behaviors.Can_Be_Described = can_describe;
+
+		        // Look for rights information to add
+		        if (mainItemRow["EmbargoEnd"] != DBNull.Value)
+		        {
+		            try
+		            {
+		                DateTime embargoEnd = DateTime.Parse(mainItemRow["EmbargoEnd"].ToString());
+		                string origAccessCode = mainItemRow["Original_AccessCode"].ToString();
+
+		                // Is there already a RightsMD module in the item?
+		                // Ensure this metadata module extension exists
+		                RightsMD_Info rightsInfo = Package_To_Finalize.Get_Metadata_Module(GlobalVar.PALMM_RIGHTSMD_METADATA_MODULE_KEY) as RightsMD_Info;
+		                if (rightsInfo == null)
+		                {
+		                    rightsInfo = new RightsMD_Info();
+		                    Package_To_Finalize.Add_Metadata_Module(GlobalVar.PALMM_RIGHTSMD_METADATA_MODULE_KEY, rightsInfo);
+		                }
+
+		                // Add the data
+		                rightsInfo.Access_Code_String = origAccessCode;
+		                rightsInfo.Embargo_End = embargoEnd;
+		            }
+		            catch (Exception)
+		            {
+
+		            }
 		        }
 		    }
 
-			// Look for user descriptions
+		    // Look for user descriptions
 			Tracer.Add_Trace("SobekCM_METS_Based_ItemBuilder.Finish_Building_Item", "Look for user descriptions (or tags)");
 			foreach (DataRow thisRow in DatabaseInfo.Tables[0].Rows)
 			{
@@ -609,7 +613,7 @@ namespace SobekCM.Engine_Library.Items
 				if (!Convert.ToBoolean(thisRow["impliedLink"]))
 				{
 				    string code = thisRow["Code"].ToString();
-				    if (String.Compare(code, "all", true) != 0)
+				    if (String.Compare(code, "all", StringComparison.OrdinalIgnoreCase) != 0)
 				    {
 				        Package_To_Finalize.Behaviors.Add_Aggregation(code, thisRow["Name"].ToString(), thisRow["Type"].ToString());
 				    }
@@ -622,7 +626,7 @@ namespace SobekCM.Engine_Library.Items
 				foreach (DataRow thisRow in DatabaseInfo.Tables[1].Rows)
 				{
                     string code = thisRow["Code"].ToString();
-                    if (String.Compare(code, "all", true) != 0)
+                    if (String.Compare(code, "all", StringComparison.OrdinalIgnoreCase) != 0)
                     {
                         Package_To_Finalize.Behaviors.Add_Aggregation(code, thisRow["Name"].ToString(), thisRow["Type"].ToString());
                     }
@@ -634,11 +638,14 @@ namespace SobekCM.Engine_Library.Items
 
 			pageseq = 0;
 			List<Page_TreeNode> pages_encountered = new List<Page_TreeNode>();
-			foreach (abstract_TreeNode rootNode in Package_To_Finalize.Divisions.Physical_Tree.Roots)
-			{
-				recurse_through_nodes(Package_To_Finalize, rootNode, pages_encountered);
-			}
-			Package_To_Finalize.Web.Static_PageCount = pages_encountered.Count;
+		    if (!Package_To_Finalize.Behaviors.Dark_Flag)
+		    {
+		        foreach (abstract_TreeNode rootNode in Package_To_Finalize.Divisions.Physical_Tree.Roots)
+		        {
+		            recurse_through_nodes(Package_To_Finalize, rootNode, pages_encountered);
+		        }
+		    }
+		    Package_To_Finalize.Web.Static_PageCount = pages_encountered.Count;
 			Package_To_Finalize.Web.Static_Division_Count = divseq;
 
 			// Make sure no icons were retained from the METS file itself
@@ -664,11 +671,11 @@ namespace SobekCM.Engine_Library.Items
 				{
 					if (link[0] == '?')
 					{
-						html = "<a href=\"" + link + "\"><img class=\"SobekItemWordmark\" src=\"<%BASEURL%>design/wordmarks/" + image + "\" title=\"" + name + "\" alt=\"" + name + "\" /></a>";
+						html = "<a href=\"" + link + "\"><img class=\"SobekItemWordmark\" src=\"<%BASEURL%>design/wordmarks/" + image + "\" alt=\"" + name + "\" /></a>";
 					}
 					else
 					{
-						html = "<a href=\"" + link + "\" target=\"_blank\"><img class=\"SobekItemWordmark\" src=\"<%BASEURL%>design/wordmarks/" + image + "\" title=\"" + name + "\" alt=\"" + name + "\" /></a>";
+						html = "<a href=\"" + link + "\" target=\"_blank\"><img class=\"SobekItemWordmark\" src=\"<%BASEURL%>design/wordmarks/" + image + "\" alt=\"" + name + "\" /></a>";
 					}
 				}
 
@@ -938,15 +945,14 @@ namespace SobekCM.Engine_Library.Items
 			}
 
 			// Step through each download and make sure it is fully built
-			if (Package_To_Finalize.Divisions.Download_Tree.Has_Files)
+			if (( !Package_To_Finalize.Behaviors.Dark_Flag ) && ( Package_To_Finalize.Divisions.Download_Tree.Has_Files))
 			{
 				string ead_file = String.Empty;
 				int pdf_download = 0;
+			    int video_download = 0;
 				string pdf_download_url = String.Empty;
-				int non_flash_downloads = 0;
 				List<abstract_TreeNode> downloadPages = Package_To_Finalize.Divisions.Download_Tree.Pages_PreOrder;
-				bool download_handled = false;
-                string xsl = String.Empty;
+			    string xsl = String.Empty;
 
                 // Keep track of all the unhandled downloads, which will casue a DOWNLOAD tab to appear
 			    List<abstract_TreeNode> unhandledDownload = new List<abstract_TreeNode>();
@@ -954,7 +960,7 @@ namespace SobekCM.Engine_Library.Items
                 // Step through each download page
 				foreach (Page_TreeNode downloadPage in downloadPages)
 				{
-                    download_handled = false;
+                    bool download_handled = false;
 
                     // If this page has only a single file, might be handled by a single viewer
                     if ((!download_handled) && (downloadPage.Files.Count == 1))
@@ -1004,8 +1010,57 @@ namespace SobekCM.Engine_Library.Items
                                     }
                                 }
                                 break;
+
+                            
+                            case "WEBM":
+                            case "OGG":
+                            case "MP4":
+                            //case "AVI":
+                            //case "WMV":
+                            //case "MPG":
+                            //case "MOV":
+                            //case "FLV":
+                            //case "VOB":
+                            //case "WAV":
+                            //case "OGM":
+                            //case "MKV":
+                                video_download++;
+                                download_handled = true;
+                                break;
                         }
                     }
+
+                    // Check for video files
+				    if ((!download_handled) && ( downloadPage.Files != null ))
+				    {
+				        foreach (SobekCM_File_Info thisFileInfo in downloadPage.Files)
+				        {
+                            string extension = thisFileInfo.File_Extension;
+
+                            // Was this an EAD page?
+                            switch (extension)
+                            {
+                                case "WEBM":
+                                case "OGG":
+                                case "MP4":
+                                    //case "AVI":
+                                    //case "WMV":
+                                    //case "MPG":
+                                    //case "MOV":
+                                    //case "FLV":
+                                    //case "VOB":
+                                    //case "WAV":
+                                    //case "OGM":
+                                    //case "MKV":
+                                    video_download++;
+                                    download_handled = true;
+                                    break;
+                            }
+
+                            if (download_handled)
+                                break;
+				        }
+				    }
 
 					// Step through each download file
 					if (!download_handled)
@@ -1017,11 +1072,7 @@ namespace SobekCM.Engine_Library.Items
 							if (thisFile.File_Extension == "SWF")
 							{
 								string flashlabel = downloadPage.Label;
-								View_Object newView = Package_To_Finalize.Behaviors.Add_View(View_Enum.FLASH, flashlabel, String.Empty, thisFile.System_Name);
-							}
-							else
-							{
-								non_flash_downloads++;
+								Package_To_Finalize.Behaviors.Add_View(View_Enum.FLASH, flashlabel, String.Empty, thisFile.System_Name);
 							}
 
 							if (thisFile.File_Extension == "PDF")
@@ -1032,6 +1083,7 @@ namespace SobekCM.Engine_Library.Items
                                     pdf_download_url = thisFile.System_Name;
                                 }
 							}
+
 						}
 					}
 				}
@@ -1058,8 +1110,8 @@ namespace SobekCM.Engine_Library.Items
 
 				}
 
-				string view_type_of = Package_To_Finalize.Behaviors.Views[0].GetType().ToString();
-				string ufdc_type_of = Package_To_Finalize.Behaviors.Views[0].View_Type.ToString();
+				//string view_type_of = Package_To_Finalize.Behaviors.Views[0].GetType().ToString();
+				//string ufdc_type_of = Package_To_Finalize.Behaviors.Views[0].View_Type.ToString();
 
 
                 if (unhandledDownload.Count > 0 )
@@ -1071,6 +1123,11 @@ namespace SobekCM.Engine_Library.Items
 				{
                     Package_To_Finalize.Behaviors.Add_View(View_Enum.PDF).FileName = pdf_download_url;
 				}
+
+			    if (video_download > 0)
+			    {
+			        Package_To_Finalize.Behaviors.Add_View(View_Enum.VIDEO);
+			    }
 			}
 			else
 			{
@@ -1088,14 +1145,14 @@ namespace SobekCM.Engine_Library.Items
 			}
 
 			// Look for the HTML type views next, and possible set some defaults
-			if (viewsFromDb.ContainsKey(View_Enum.HTML))
+            if ((!Package_To_Finalize.Behaviors.Dark_Flag) && viewsFromDb.ContainsKey(View_Enum.HTML))
 			{
 				Package_To_Finalize.Behaviors.Add_View(viewsFromDb[View_Enum.HTML]);
 				viewsFromDb.Remove(View_Enum.HTML);
 			}
 
 			// Copy the TEI flag
-			if (viewsFromDb.ContainsKey(View_Enum.TEI))
+            if ((!Package_To_Finalize.Behaviors.Dark_Flag) && viewsFromDb.ContainsKey(View_Enum.TEI))
 			{
 				Package_To_Finalize.Behaviors.Add_View(viewsFromDb[View_Enum.TEI]);
 				viewsFromDb.Remove(View_Enum.TEI);
@@ -1118,23 +1175,24 @@ namespace SobekCM.Engine_Library.Items
 				//}
 			}
 
-			// Look for the RELATED IMAGES view next
-			if (viewsFromDb.ContainsKey(View_Enum.RELATED_IMAGES))
-			{
-				Package_To_Finalize.Behaviors.Add_View(viewsFromDb[View_Enum.RELATED_IMAGES]);
-				viewsFromDb.Remove(View_Enum.RELATED_IMAGES);
-			}
-
-			// Look for the PAGE TURNER view next
-			if (viewsFromDb.ContainsKey(View_Enum.PAGE_TURNER))
-			{
-				Package_To_Finalize.Behaviors.Add_View(viewsFromDb[View_Enum.PAGE_TURNER]);
-				viewsFromDb.Remove(View_Enum.PAGE_TURNER);
-			}
-
 			// Finally, add all the ITEM VIEWS
-			if ((Package_To_Finalize.Web.Pages_By_Sequence != null) && (Package_To_Finalize.Web.Pages_By_Sequence.Count > 0))
+            if ((!Package_To_Finalize.Behaviors.Dark_Flag) && (Package_To_Finalize.Web.Pages_By_Sequence != null) && (Package_To_Finalize.Web.Pages_By_Sequence.Count > 0))
 			{
+                // Look for the RELATED IMAGES view next
+                if (viewsFromDb.ContainsKey(View_Enum.RELATED_IMAGES))
+                {
+                    Package_To_Finalize.Behaviors.Add_View(viewsFromDb[View_Enum.RELATED_IMAGES]);
+                    viewsFromDb.Remove(View_Enum.RELATED_IMAGES);
+                }
+
+                // Look for the PAGE TURNER view next
+                if (viewsFromDb.ContainsKey(View_Enum.PAGE_TURNER))
+                {
+                    Package_To_Finalize.Behaviors.Add_View(viewsFromDb[View_Enum.PAGE_TURNER]);
+                    viewsFromDb.Remove(View_Enum.PAGE_TURNER);
+                }
+
+                // Add the individual PAGE VIEWS
 				foreach (View_Object thisObject in viewsFromDb.Values)
 				{
 					switch (thisObject.View_Type)

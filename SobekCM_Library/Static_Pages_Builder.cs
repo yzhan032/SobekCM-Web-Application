@@ -189,7 +189,7 @@ namespace SobekCM.Library
 	    /// <param name="InstanceName"> Name of this instance </param>
 	    /// <param name="PrimaryLogId"> Log ID in the case this is the builder and it has been pre-logged </param>
 	    /// <returns> The number of encountered errors </returns>
-	    public int Rebuild_All_Static_Pages(LogFileXHTML Logger, bool BuildAllCitationPages, string RssFeedLocation, string InstanceName, long PrimaryLogId )
+	    public int Rebuild_All_Static_Pages(LogFileXhtml Logger, bool BuildAllCitationPages, string RssFeedLocation, string InstanceName, long PrimaryLogId )
         {
 	        if (InstanceName.Length > 0)
 		        InstanceName = InstanceName + " - ";
@@ -234,7 +234,7 @@ namespace SobekCM.Library
 
 
 					// ********** TEMPORARY CLEAN UP ***********************//
-					/// TODO: REMOVE THIS!
+					// TODO: REMOVE THIS!
 					// *******************************************//
 					try
 					{
@@ -416,7 +416,7 @@ namespace SobekCM.Library
 		                items = Engine_Database.Simple_Item_List(code, tracer);
 
 		                // Get the item aggregation object
-                        Item_Aggregation aggregation = SobekEngineClient.Aggregations.Get_Aggregation(code.ToLower(), UI_ApplicationCache_Gateway.Settings.Default_UI_Language, UI_ApplicationCache_Gateway.Settings.Default_UI_Language, null);
+                        Item_Aggregation aggregation = SobekEngineClient.Aggregations.Get_Aggregation(code.ToLower(), UI_ApplicationCache_Gateway.Settings.Default_UI_Language, UI_ApplicationCache_Gateway.Settings.Default_UI_Language, tracer);
 
 
 		                // Build the static browse pages
@@ -456,7 +456,7 @@ namespace SobekCM.Library
             Console.WriteLine(InstanceName + @"Building static links page for ALL ITEMS");
 			SobekCM_Database.Builder_Add_Log_Entry(PrimaryLogId, String.Empty, "Standard", "Building static links page for ALL ITEMS", String.Empty);
 
-            Item_Aggregation allAggregation = SobekEngineClient.Aggregations.Get_Aggregation("all", UI_ApplicationCache_Gateway.Settings.Default_UI_Language, UI_ApplicationCache_Gateway.Settings.Default_UI_Language, null);
+            Item_Aggregation allAggregation = SobekEngineClient.Aggregations.Get_Aggregation("all", UI_ApplicationCache_Gateway.Settings.Default_UI_Language, UI_ApplicationCache_Gateway.Settings.Default_UI_Language, tracer);
 
             Build_All_Browse(allAggregation, items);
 
@@ -683,7 +683,8 @@ namespace SobekCM.Library
 		        currentMode.Skin = Aggregation.Web_Skins[0];
 
            // Get the skin object
-            Web_Skin_Object skinObject = assistant.Get_HTML_Skin(currentMode, Engine_ApplicationCache_Gateway.Web_Skin_Collection, false, null);
+            Custom_Tracer tracer = new Custom_Tracer();
+            Web_Skin_Object skinObject = assistant.Get_HTML_Skin(currentMode, Engine_ApplicationCache_Gateway.Web_Skin_Collection, false, tracer);
             if (skinObject == null)
                 return true;
   
@@ -738,8 +739,7 @@ namespace SobekCM.Library
 			writer.WriteLine("</div>");
 			writer.WriteLine();
 
-			writer.WriteLine("<div class=\"sbkPrsw_ResultsPanel\">");
-
+			writer.WriteLine("<div class=\"sbkPrsw_ResultsPanel\" id=\"main-content\">");
 
             writer.WriteLine("<br />");
             writer.WriteLine("<br />");

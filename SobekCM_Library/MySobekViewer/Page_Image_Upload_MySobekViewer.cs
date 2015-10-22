@@ -13,7 +13,6 @@ using System.Web.UI.WebControls;
 using SobekCM.Core.MemoryMgmt;
 using SobekCM.Core.Navigation;
 using SobekCM.Engine_Library.Email;
-using SobekCM.Engine_Library.Navigation;
 using SobekCM.Library.HTML;
 using SobekCM.Library.Settings;
 using SobekCM.Library.UI;
@@ -29,13 +28,11 @@ using Image = System.Drawing.Image;
 
 namespace SobekCM.Library.MySobekViewer
 {
-
-
+    /// <summary> MySobek viewer for uploading new page images to an existing digital resource </summary>
     public class Page_Image_Upload_MySobekViewer : abstract_MySobekViewer
     {
         private bool criticalErrorEncountered;
         private readonly string digitalResourceDirectory;
-        private readonly List<string> validationErrors;
 
         #region Constructor
 
@@ -66,14 +63,30 @@ namespace SobekCM.Library.MySobekViewer
             {
 				// Any post-processing to do?
 				string[] files = Directory.GetFiles(digitalResourceDirectory);
+
+                // Make a dictionary of the included files
+                Dictionary<string, string> filesByName = new Dictionary<string, string>();
+                foreach (string thisFile in files)
+                {
+                    string fileName = Path.GetFileName(thisFile);
+                    if (!String.IsNullOrEmpty(fileName))
+                        filesByName[fileName.ToUpper()] = thisFile;
+                }
+
+                // Now, step through each TIFF
 				foreach (string thisFile in files)
 				{
-					FileInfo thisFileInfo = new FileInfo(thisFile);
-					if ((thisFileInfo.Extension.ToUpper() == ".TIF") || (thisFileInfo.Extension.ToUpper() == ".TIFF"))
+                    string extension = Path.GetExtension(thisFile);
+                    string name = Path.GetFileName(thisFile);
+
+                    // Should never happen
+                    if ((extension == null) || (name == null )) continue;
+
+                    if ((String.Compare(extension, ".TIF", StringComparison.OrdinalIgnoreCase) == 0) || (String.Compare(extension, ".TIFF", StringComparison.OrdinalIgnoreCase) == 0))
 					{
 						// Is there a JPEG and/or thumbnail?
-						string jpeg = digitalResourceDirectory + "\\" + thisFileInfo.Name.Replace(thisFileInfo.Extension, "") + ".jpg";
-						string jpeg_thumbnail = digitalResourceDirectory + "\\" + thisFileInfo.Name.Replace(thisFileInfo.Extension, "") + "thm.jpg";
+                        string jpeg = digitalResourceDirectory + "\\" + name.Replace(extension, "") + ".jpg";
+                        string jpeg_thumbnail = digitalResourceDirectory + "\\" + name.Replace(extension, "") + "thm.jpg";
 
 						// Is one missing?
 						if ((!File.Exists(jpeg)) || (!File.Exists(jpeg_thumbnail)))
@@ -87,13 +100,76 @@ namespace SobekCM.Library.MySobekViewer
 								thumbnailImg.Save(jpeg_thumbnail, ImageFormat.Jpeg);
 
 							}
-							catch (Exception)
+							catch 
 							{
-								bool error = true;
+                                // Do nothing
 							}
 						}
 					}
 				}
+
+                // Now, check one more time for JPEGs that do not have thumbnails
+                FileStream reuseStream = null;
+                foreach (string thisFile in files)
+                {
+                    string extension = Path.GetExtension(thisFile);
+                    string name = Path.GetFileName(thisFile);
+
+                    // Should never happen
+                    if ((extension == null) || (name == null)) continue;
+
+                    if ((String.Compare(extension, ".JPG", StringComparison.OrdinalIgnoreCase) == 0) && ( name.IndexOf("THM.JPG", StringComparison.OrdinalIgnoreCase) < 0 ))
+                    {
+                        // Is there a JPEG and/or thumbnail?
+                        string jpeg_thumbnail = digitalResourceDirectory + "\\" + name.Replace(extension, "") + "thm.jpg";
+
+                        // Is one missing?
+                        if (!File.Exists(jpeg_thumbnail))
+                        {
+                            try
+                            {
+                                // Load the JPEG
+                                Image jpegSourceImg = SafeImageFromFile(thisFile, ref reuseStream);
+                                if ((jpegSourceImg.Width > UI_ApplicationCache_Gateway.Settings.JPEG_Maximum_Width) || (jpegSourceImg.Height > UI_ApplicationCache_Gateway.Settings.JPEG_Maximum_Height))
+                                {
+                                    // Copy the JPEG
+                                    string final_destination = RequestSpecificValues.Current_Item.Source_Directory + "\\" + UI_ApplicationCache_Gateway.Settings.Backup_Files_Folder_Name;
+                                    if (Directory.Exists(final_destination))
+                                        Directory.CreateDirectory(final_destination);
+                                    string copy_file = final_destination + "\\" + name.Replace(extension, "") + "_ORIG.jpg";
+                                    File.Copy(thisFile, copy_file, true);
+
+                                    // Create the TIFF
+                                    string tiff_file = digitalResourceDirectory + "\\" + name.Replace(extension, "") + ".tif";
+                                    jpegSourceImg.Save(tiff_file, ImageFormat.Tiff);
+
+                                    // Delete the original JPEG file
+                                    File.Delete(thisFile);
+
+                                    // Now, create the smaller JPEG and JPEG thumbnail
+                                    string jpeg = digitalResourceDirectory + "\\" + name.Replace(extension, "") + ".jpg";
+                                    var mainImg = ScaleImage(jpegSourceImg, UI_ApplicationCache_Gateway.Settings.JPEG_Width, UI_ApplicationCache_Gateway.Settings.JPEG_Height);
+                                    mainImg.Save(jpeg, ImageFormat.Jpeg);
+
+                                    // And save the thumbnasil as well
+                                    var thumbnailImg = ScaleImage(jpegSourceImg, 150, 400);
+                                    thumbnailImg.Save(jpeg_thumbnail, ImageFormat.Jpeg);
+                                }
+                                else
+                                {
+                                    // The JPEG is good to show AS IS, so just create the thumbnail
+                                    var thumbnailImg = ScaleImage(jpegSourceImg, 150, 400);
+                                    thumbnailImg.Save(jpeg_thumbnail, ImageFormat.Jpeg);
+                                }
+                            }
+                            catch ( Exception ee)
+                            {
+                                RequestSpecificValues.Current_Mode.Error_Message = ee.Message;
+                                // Do nothing
+                            }
+                        }
+                    }
+                }
             }
 
             // If this is post-back, handle it
@@ -198,12 +274,12 @@ namespace SobekCM.Library.MySobekViewer
 		/// <summary> Scales an existing SourceImage to a new max width / max height </summary>
 		/// <param name="SourceImage"> Source image </param>
 		/// <param name="MaxWidth"> Maximum width for the new image </param>
-		/// <param name="maxHeight"> Maximum height for the new image </param>
+		/// <param name="MaxHeight"> Maximum height for the new image </param>
 		/// <returns> Newly scaled image, without changing the original source image </returns>
-		public static Image ScaleImage(Image SourceImage, int MaxWidth, int maxHeight)
+		public static Image ScaleImage(Image SourceImage, int MaxWidth, int MaxHeight)
 		{
 			var ratioX = (double)MaxWidth / SourceImage.Width;
-			var ratioY = (double)maxHeight / SourceImage.Height;
+			var ratioY = (double)MaxHeight / SourceImage.Height;
 			var ratio = Math.Min(ratioX, ratioY);
 
 			var newWidth = (int)(SourceImage.Width * ratio);
@@ -311,7 +387,7 @@ namespace SobekCM.Library.MySobekViewer
 
                 // Determine the total size of the package before saving
                 string[] all_files_final = Directory.GetFiles(final_destination);
-                double size = all_files_final.Aggregate<string, double>(0, (current, thisFile) => current + (((new FileInfo(thisFile)).Length)/1024));
+                double size = all_files_final.Aggregate<string, double>(0, (Current, ThisFile) => Current + (((new FileInfo(ThisFile)).Length)/1024));
                 Item_To_Complete.DiskSize_KB = size;
 
                 // Create the options dictionary used when saving information to the database, or writing MarcXML
@@ -406,13 +482,10 @@ namespace SobekCM.Library.MySobekViewer
             }
             catch (Exception ee)
             {
-                validationErrors.Add("Error encountered during item save!");
-                validationErrors.Add(ee.ToString().Replace("\r", "<br />"));
-
                 // Set an initial flag 
                 criticalErrorEncountered = true;
 
-                string error_body = "<strong>ERROR ENCOUNTERED DURING ONLINE PAGE IMAGE UPLOAD</strong><br /><br /><blockquote>Title: " + Item_To_Complete.Bib_Info.Main_Title.Title + "<br />Permanent Link: <a href=\"" + RequestSpecificValues.Current_Mode.Base_URL + "/" + Item_To_Complete.BibID + "/" + Item_To_Complete.VID + "\">" + base.RequestSpecificValues.Current_Mode.Base_URL + "/" + Item_To_Complete.BibID + "/" + Item_To_Complete.VID + "</a><br />RequestSpecificValues.Current_User: " + RequestSpecificValues.Current_User.Full_Name + "<br /><br /></blockquote>" + ee.ToString().Replace("\n", "<br />");
+                string error_body = "<strong>ERROR ENCOUNTERED DURING ONLINE PAGE IMAGE UPLOAD</strong><br /><br /><blockquote>Title: " + Item_To_Complete.Bib_Info.Main_Title.Title + "<br />Permanent Link: <a href=\"" + RequestSpecificValues.Current_Mode.Base_URL + "/" + Item_To_Complete.BibID + "/" + Item_To_Complete.VID + "\">" + RequestSpecificValues.Current_Mode.Base_URL + "/" + Item_To_Complete.BibID + "/" + Item_To_Complete.VID + "</a><br />RequestSpecificValues.Current_User: " + RequestSpecificValues.Current_User.Full_Name + "<br /><br /></blockquote>" + ee.ToString().Replace("\n", "<br />");
                 string error_subject = "Error during file management for '" + Item_To_Complete.Bib_Info.Main_Title.Title + "'";
                 string email_to = UI_ApplicationCache_Gateway.Settings.System_Error_Email;
                 if (email_to.Length == 0)
@@ -422,6 +495,29 @@ namespace SobekCM.Library.MySobekViewer
 
 
             return criticalErrorEncountered;
+        }
+
+        #endregion
+
+        #region Method to return an image after closing connectio to the file
+
+        private static Image SafeImageFromFile(string FilePath, ref FileStream ReuseStream)
+        {
+            // http://stackoverflow.com/questions/18250848/how-to-prevent-the-image-fromfile-method-to-lock-the-file
+
+            Bitmap img;
+            ReuseStream = new FileStream(FilePath, FileMode.Open, FileAccess.Read);
+            using (Bitmap b = new Bitmap(ReuseStream))
+            {
+                img = new Bitmap(b.Width, b.Height, b.PixelFormat);
+                using (Graphics g = Graphics.FromImage(img))
+                {
+                    g.DrawImage(b, 0, 0, img.Width, img.Height);
+                    g.Flush();
+                }
+            }
+            ReuseStream.Close();
+            return img;
         }
 
         #endregion
@@ -538,15 +634,12 @@ namespace SobekCM.Library.MySobekViewer
 
 
                 // Step through all the page image file groups
-                int file_counter = 0;
                 for (int i = 0; i < file_groups.Count; i++)
                 {
                     List<string> groupFiles = file_groups.ElementAt(i).Value;
 
                     foreach (string thisFile in groupFiles)
                     {
-                        file_counter++;
-
                         // Add the file name literal
                         FileInfo fileInfo = new FileInfo(thisFile);  
 						Output.WriteLine("  <tr style=\"min-height:22px;\">");
@@ -617,7 +710,7 @@ namespace SobekCM.Library.MySobekViewer
             add_upload_controls(MainPlaceHolder, Tracer);
         }
 
-        private void add_upload_controls(PlaceHolder placeHolder, Custom_Tracer Tracer)
+        private void add_upload_controls(PlaceHolder PlaceHolder, Custom_Tracer Tracer)
         {
             Tracer.Add_Trace("New_Group_And_Item_MySobekViewer.add_upload_controls", String.Empty);
 
@@ -627,23 +720,25 @@ namespace SobekCM.Library.MySobekViewer
             filesBuilder.AppendLine("<blockquote>");
 
             LiteralControl filesLiteral2 = new LiteralControl(filesBuilder.ToString());
-            placeHolder.Controls.Add(filesLiteral2);
+            PlaceHolder.Controls.Add(filesLiteral2);
             filesBuilder.Remove(0, filesBuilder.Length);
 
-			UploadiFiveControl uploadControl = new UploadiFiveControl();
-			uploadControl.UploadPath = digitalResourceDirectory;
-			uploadControl.UploadScript = RequestSpecificValues.Current_Mode.Base_URL + "UploadiFiveFileHandler.ashx";
-			uploadControl.AllowedFileExtensions = UI_ApplicationCache_Gateway.Settings.Upload_Image_Types;
-			uploadControl.SubmitWhenQueueCompletes = true;
-	        uploadControl.RemoveCompleted = true;
-			uploadControl.Swf = Static_Resources.Uploadify_Swf;
-			uploadControl.RevertToFlashVersion = true;
-			placeHolder.Controls.Add(uploadControl);
+			UploadiFiveControl uploadControl = new UploadiFiveControl
+			{
+			    UploadPath = digitalResourceDirectory, 
+                UploadScript = RequestSpecificValues.Current_Mode.Base_URL + "UploadiFiveFileHandler.ashx", 
+                AllowedFileExtensions = UI_ApplicationCache_Gateway.Settings.Upload_Image_Types, 
+                SubmitWhenQueueCompletes = true, 
+                RemoveCompleted = true, 
+                Swf = Static_Resources.Uploadify_Swf, 
+                RevertToFlashVersion = true
+			};
+            PlaceHolder.Controls.Add(uploadControl);
 
 			filesBuilder.AppendLine("</blockquote><br />");
 
             LiteralControl literal1 = new LiteralControl(filesBuilder.ToString());
-            placeHolder.Controls.Add(literal1);
+            PlaceHolder.Controls.Add(literal1);
         }
 
 		/// <summary> Gets the collection of special behaviors which this admin or mySobek viewer

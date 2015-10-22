@@ -1,6 +1,11 @@
-﻿using System;
+﻿#region Using directives
+
+using System;
 using System.Runtime.Serialization;
+using System.Xml.Serialization;
 using ProtoBuf;
+
+#endregion
 
 namespace SobekCM.Core.BriefItem
 {
@@ -10,11 +15,13 @@ namespace SobekCM.Core.BriefItem
     {
         /// <summary> Prefix used for this namespace throughout the object </summary>
         [DataMember(Name = "prefix")]
+        [XmlAttribute("prefix")]
         [ProtoMember(1)]
         public string Prefix { get; set; }
 
         /// <summary> URI for the schema/namespace referred to by the prefix  </summary>
         [DataMember(Name = "uri")]
+        [XmlText]
         [ProtoMember(2)]
         public string URI { get; set; }
 

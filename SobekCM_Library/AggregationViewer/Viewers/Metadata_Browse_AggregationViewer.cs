@@ -26,8 +26,8 @@ namespace SobekCM.Library.AggregationViewer.Viewers
     /// Collection viewers are used when displaying collection home pages, searches, browses, and information pages.<br /><br />
     /// During a valid html request to display a static browse or info page, the following steps occur:
     /// <ul>
-    /// <li>Application state is built/verified by the <see cref="Application_State_Builder"/> </li>
-    /// <li>Request is analyzed by the <see cref="SobekCM_QueryString_Analyzer"/> and output as a <see cref="Navigation_Object"/> </li>
+    /// <li>Application state is built/verified by the Application_State_Builder </li>
+    /// <li>Request is analyzed by the <see cref="QueryString_Analyzer"/> and output as a <see cref="Navigation_Object"/> </li>
     /// <li>Main writer is created for rendering the output, in this case the <see cref="Html_MainWriter"/> </li>
     /// <li>The HTML writer will create the necessary subwriter.  For a collection-level request, an instance of the  <see cref="Aggregation_HtmlSubwriter"/> class is created. </li>
     /// <li>To display the requested collection view, the collection subwriter will creates an instance of this class </li>
@@ -44,13 +44,13 @@ namespace SobekCM.Library.AggregationViewer.Viewers
             
 
             // If there is not info browse mode listed, use the default
-            if (RequestSpecificValues.Current_Mode.Info_Browse_Mode.Length == 0)
+            if ( String.IsNullOrEmpty(RequestSpecificValues.Current_Mode.Info_Browse_Mode))
             {
                 string defaultBrowseBy = RequestSpecificValues.Hierarchy_Object.Default_BrowseBy ?? String.Empty;
                 RequestSpecificValues.Current_Mode.Info_Browse_Mode = defaultBrowseBy;
 
                 // Still length of zero?
-                if (RequestSpecificValues.Current_Mode.Info_Browse_Mode.Length == 0)
+                if (String.IsNullOrEmpty(RequestSpecificValues.Current_Mode.Info_Browse_Mode))
                 {
                     // Just look for the first browse by
                     foreach (Item_Aggregation_Child_Page browse in RequestSpecificValues.Hierarchy_Object.Child_Pages)
@@ -65,7 +65,7 @@ namespace SobekCM.Library.AggregationViewer.Viewers
 
             }
 
-            if ((RequestSpecificValues.Current_Mode.Info_Browse_Mode.Length == 0) && (RequestSpecificValues.Hierarchy_Object.Has_Browse_By_Pages))
+            if ((String.IsNullOrEmpty(RequestSpecificValues.Current_Mode.Info_Browse_Mode)) && (RequestSpecificValues.Hierarchy_Object.Has_Browse_By_Pages))
                 RequestSpecificValues.Current_Mode.Info_Browse_Mode = RequestSpecificValues.Hierarchy_Object.Child_Page_By_Code(RequestSpecificValues.Current_Mode.Info_Browse_Mode).Code;
 
             // Get this browse
@@ -296,7 +296,7 @@ namespace SobekCM.Library.AggregationViewer.Viewers
                 Output.WriteLine("</td>");
                 Output.WriteLine("<td>");
             }
-			Output.WriteLine("<div class=\"sbkMebv_ResultsPanel\">");
+			Output.WriteLine("<div class=\"sbkMebv_ResultsPanel\" id=\"main-content\" role=\"main\">");
 
             RequestSpecificValues.Current_Mode.Info_Browse_Mode = original_browse_mode;
 

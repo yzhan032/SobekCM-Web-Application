@@ -2,6 +2,7 @@
 
 using System;
 using System.IO;
+using System.Reflection;
 using SobekCM.Builder_Library.Settings;
 using SobekCM.Resource_Object.Utilities;
 
@@ -9,10 +10,15 @@ using SobekCM.Resource_Object.Utilities;
 
 namespace SobekCM.Builder_Library.Modules.Items
 {
+    /// <summary> Item-level submission package module creates all the image derivative files from original jpeg and tiff files </summary>
+    /// <remarks> This class implements the <see cref="abstractSubmissionPackageModule" /> abstract class and implements the <see cref="iSubmissionPackageModule" /> interface. </remarks>
     public class CreateImageDerivativesModule : abstractSubmissionPackageModule
     {
         private bool returnValue;
 
+        /// <summary> Creates all the image derivative files from original jpeg and tiff files </summary>
+        /// <param name="Resource"> Incoming digital resource object </param>
+        /// <returns> TRUE if processing can continue, FALSE if a critical error occurred which should stop all processing </returns>
         public override bool DoWork(Incoming_Digital_Resource Resource)
         {
             returnValue = true;
@@ -33,11 +39,17 @@ namespace SobekCM.Builder_Library.Modules.Items
                 // Only continue if some exist
                 if ((jpeg_files.Length > 0) || (tiff_files.Length > 0))
                 {
-                    string startupPath = Path.GetDirectoryName(System.Reflection.Assembly.GetCallingAssembly().Location);
+                    string startupPath = Path.GetDirectoryName(Assembly.GetCallingAssembly().Location);
+                    if (startupPath == null)
+                    {
+                        OnError("Unable to find the startup path in CreateImageDerivativesModule!", String.Empty, String.Empty, -1);
+                        return false;
+                    }
+
                     string kakadu_path = Path.Combine(startupPath, "Kakadu");
 
                     // Create the image process object for creating 
-                    Image_Derivative_Creation_Processor imageProcessor = new Image_Derivative_Creation_Processor(imagemagick_executable, kakadu_path, true, true, Settings.JPEG_Width, Settings.JPEG_Height, false, Settings.Thumbnail_Width, Settings.Thumbnail_Height);
+                    Image_Derivative_Creation_Processor imageProcessor = new Image_Derivative_Creation_Processor(imagemagick_executable, kakadu_path, true, true, Settings.JPEG_Width, Settings.JPEG_Height, false, Settings.Thumbnail_Width, Settings.Thumbnail_Height, null);
                     imageProcessor.New_Task_String += imageProcessor_New_Task_String;
                     imageProcessor.Error_Encountered += imageProcessor_Error_Encountered;
 

@@ -1,8 +1,12 @@
-﻿using SobekCM.Resource_Object;
-using SobekCM.Resource_Object.Metadata_Modules;
-using SobekCM.Core.BriefItem;
+﻿#region Using directives
 
-namespace SobekCM.Engine_Library.Items.BriefItems
+using SobekCM.Core.BriefItem;
+using SobekCM.Resource_Object;
+using SobekCM.Resource_Object.Metadata_Modules;
+
+#endregion
+
+namespace SobekCM.Engine_Library.Items.BriefItems.Mappers
 {
     /// <summary> Maps all the Rights MD specific metadata from the METS-based SobekCM_Item object
     /// to the BriefItem, used for most the public functions of the front-end </summary>

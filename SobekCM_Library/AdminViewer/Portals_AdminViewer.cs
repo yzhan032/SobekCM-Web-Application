@@ -7,10 +7,10 @@ using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
 using System.Web;
+using SobekCM.Core.Aggregations;
 using SobekCM.Core.ApplicationState;
 using SobekCM.Core.Navigation;
 using SobekCM.Engine_Library.Database;
-using SobekCM.Engine_Library.Navigation;
 using SobekCM.Library.Database;
 using SobekCM.Library.HTML;
 using SobekCM.Library.MainWriters;
@@ -28,8 +28,8 @@ namespace SobekCM.Library.AdminViewer
     /// authentication, such as online submittal, metadata editing, and system administrative tasks.<br /><br />
     /// During a valid html request, the following steps occur:
     /// <ul>
-    /// <li>Application state is built/verified by the <see cref="Application_State.Application_State_Builder"/> </li>
-    /// <li>Request is analyzed by the <see cref="Navigation.SobekCM_QueryString_Analyzer"/> and output as a <see cref="Navigation.SobekCM_Navigation_Object"/> </li>
+    /// <li>Application state is built/verified by the Application_State_Builder </li>
+    /// <li>Request is analyzed by the QueryString_Analyzer and output as a <see cref="Navigation_Object"/>  </li>
     /// <li>Main writer is created for rendering the output, in his case the <see cref="Html_MainWriter"/> </li>
     /// <li>The HTML writer will create the necessary subwriter.  Since this action requires authentication, an instance of the  <see cref="MySobek_HtmlSubwriter"/> class is created. </li>
     /// <li>The mySobek subwriter creates an instance of this viewer to show the URL UI_ApplicationCache_Gateway.URL_Portals active in this digital library</li>
@@ -100,7 +100,7 @@ namespace SobekCM.Library.AdminViewer
                                     string edit_name = form["form_portal_name"].Trim();
                                     string edit_abbr = form["form_portal_abbr"].Trim();
                                     string edit_skin = form["form_portal_skin"].Trim();
-                                    string edit_aggr = form["form_portal_aggregation"].Trim();
+                                    string edit_aggr = String.IsNullOrEmpty(form["form_portal_aggregation"]) ? String.Empty : form["form_portal_aggregation"].Trim();
                                     string edit_url = form["form_portal_url"].Trim();
                                     string edit_purl = form["form_portal_purl"].Trim();
                                     int portalid = Convert.ToInt32(save_value);
@@ -131,13 +131,13 @@ namespace SobekCM.Library.AdminViewer
                                         {
                                             if (thisPortal.ID != portalid)
                                             {
-                                                if (String.Compare(thisPortal.Name, entered_portal_name, true) == 0)
+                                                if (String.Compare(thisPortal.Name, edit_name, true) == 0)
                                                 {
                                                     portal_name_match = true;
                                                     break;
                                                 }
 
-                                                if (String.Compare(thisPortal.URL_Segment, entered_url_segment, true) == 0)
+                                                if (String.Compare(thisPortal.URL_Segment, edit_url, true) == 0)
                                                 {
                                                     url_segment_match = true;
                                                     break;
@@ -265,7 +265,7 @@ namespace SobekCM.Library.AdminViewer
                             }
                         }
                     }
-                    catch (Exception)
+                    catch 
                     {
                         actionMessage = "Exception caught while handling request";
                     }
@@ -382,7 +382,7 @@ namespace SobekCM.Library.AdminViewer
             Output.WriteLine("        <td>");
             Output.WriteLine("            <select class=\"sbkPoav_select sbkAdmin_Focusable\" name=\"form_portal_aggregation\" id=\"form_portal_aggregation\" " + disabled_string + " >");
             Output.WriteLine("              <option value=\"\"></option>");
-            foreach (Core.Aggregations.Item_Aggregation_Related_Aggregations thisAggr in UI_ApplicationCache_Gateway.Aggregations.All_Aggregations)
+            foreach (Item_Aggregation_Related_Aggregations thisAggr in UI_ApplicationCache_Gateway.Aggregations.All_Aggregations)
             {
                 if (thisAggr.Code != "ALL")
                 {
@@ -515,7 +515,7 @@ namespace SobekCM.Library.AdminViewer
                     Output.WriteLine("              <option value=\"\"></option>");
                 }
 
-                foreach (Core.Aggregations.Item_Aggregation_Related_Aggregations thisAggr in UI_ApplicationCache_Gateway.Aggregations.All_Aggregations)
+                foreach (Item_Aggregation_Related_Aggregations thisAggr in UI_ApplicationCache_Gateway.Aggregations.All_Aggregations)
                 {
                     if (thisAggr.Code != "ALL")
                     {

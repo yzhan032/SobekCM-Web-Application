@@ -435,8 +435,14 @@ namespace SobekCM.Library.HTML
                 behaviors = new List<HtmlSubwriter_Behaviors_Enum>();
             }
 
-            // ALways suppress the banner
-            behaviors.Add(HtmlSubwriter_Behaviors_Enum.Suppress_Banner);
+            // ALways suppress the banner and skip to main content
+            if (behaviors == null)
+                behaviors = new List<HtmlSubwriter_Behaviors_Enum>();
+
+            if (!behaviors.Contains(HtmlSubwriter_Behaviors_Enum.Suppress_Banner))
+                behaviors.Add(HtmlSubwriter_Behaviors_Enum.Suppress_Banner);
+            if (!behaviors.Contains(HtmlSubwriter_Behaviors_Enum.Include_Skip_To_Main_Content_Link))
+                behaviors.Add(HtmlSubwriter_Behaviors_Enum.Include_Skip_To_Main_Content_Link);
 
             //if ((searchMatchOnThisPage) && ((PageViewer.ItemViewer_Type == ItemViewer_Type_Enum.JPEG) || (PageViewer.ItemViewer_Type == ItemViewer_Type_Enum.JPEG2000)))
             //{
@@ -899,14 +905,15 @@ namespace SobekCM.Library.HTML
 
 			// Put an itemscope div around here for micro-data purposes
 			Output.WriteLine("<!-- Unstyled div placed around entire item information to support schema.org microdata -->");
-			Output.WriteLine("<div itemscope itemtype=\"http:schema.org/ItemPage\">");
+			Output.WriteLine("<section itemscope itemtype=\"http:schema.org/ItemPage\">");
 		    Output.WriteLine();
 
             // The item viewer can choose to override the standard item titlebar
 	        if (!behaviors.Contains(HtmlSubwriter_Behaviors_Enum.Item_Subwriter_Suppress_Titlebar))
 	        {
 	            Output.WriteLine("<!-- Show the title and any other important item information -->");
-	            Output.WriteLine("<div id=\"sbkIsw_Titlebar\">");
+	            Output.WriteLine("<section id=\"sbkIsw_Titlebar\" role=\"banner\">");
+                
 	            if (RequestSpecificValues.Current_Item.METS_Header.RecordStatus_Enum == METS_Record_Status.BIB_LEVEL)
 	            {
 	                string grouptitle = RequestSpecificValues.Current_Item.Behaviors.GroupTitle;
@@ -1027,7 +1034,7 @@ namespace SobekCM.Library.HTML
 	            }
 
 
-	            Output.WriteLine("</div>");
+	            Output.WriteLine("</section>");
 	            Output.WriteLine();
 	        }
 
@@ -1040,8 +1047,8 @@ namespace SobekCM.Library.HTML
 
 			    // Add the item views
 			    Output.WriteLine("<!-- Add the different view and social options -->");
-				Output.WriteLine("<nav class=\"sbkMenu_Bar\" id=\"sbkIsw_MenuBar\">");
-
+				Output.WriteLine("<nav class=\"sbkMenu_Bar\" id=\"sbkIsw_MenuBar\" role=\"navigation\" aria-label=\"Item menu\">");
+                Output.WriteLine("<h2 class=\"hidden-element\">Item menu</h2>");
 
 			    // Add the sharing buttons if this is not restricted by IP address or checked out
 			    if ((!itemRestrictedFromUserByIp) && (!itemCheckedOutByOtherUser) && (!RequestSpecificValues.Current_Mode.Is_Robot))
@@ -1176,7 +1183,7 @@ namespace SobekCM.Library.HTML
 					    {
 						    if (RequestSpecificValues.Current_Mode.Is_Robot)
 						    {
-								Output.Write("\t\t<li id=\"selected-sf-menu-item-link\"><a href=\"\">Description</a></li>");
+								Output.Write("\t\t<li class=\"selected-sf-menu-item-link\"><a href=\"\">Description</a></li>");
 						    }
 						    else
 						    {
@@ -1186,7 +1193,7 @@ namespace SobekCM.Library.HTML
 							    if ((viewerCode == "citation") || (viewerCode == "marc") || (viewerCode == "metadata") ||
 							        (viewerCode == "usage") || (viewerCode == "description"))
 							    {
-								    Output.Write("\t\t<li id=\"selected-sf-menu-item-link\"><a href=\"" + UrlWriterHelper.Redirect_URL(RequestSpecificValues.Current_Mode) + "\">Description</a>");
+								    Output.Write("\t\t<li class=\"selected-sf-menu-item-link\"><a href=\"" + UrlWriterHelper.Redirect_URL(RequestSpecificValues.Current_Mode) + "\">Description</a>");
 							    }
 							    else
 							    {
@@ -1246,7 +1253,7 @@ namespace SobekCM.Library.HTML
 							    if ((viewerCode == "allvolumes") || (viewerCode == "allvolumes2") ||
 							        (viewerCode == "allvolumes3"))
 							    {
-								    Output.Write("\t\t<li id=\"selected-sf-menu-item-link\"><a href=\"" + UrlWriterHelper.Redirect_URL(RequestSpecificValues.Current_Mode) + "\">" + all_volumes + "</a>");
+								    Output.Write("\t\t<li class=\"selected-sf-menu-item-link\"><a href=\"" + UrlWriterHelper.Redirect_URL(RequestSpecificValues.Current_Mode) + "\">" + all_volumes + "</a>");
 							    }
 							    else
 							    {
@@ -1358,7 +1365,7 @@ namespace SobekCM.Library.HTML
 						    // Was this a match?
 						    if ((RequestSpecificValues.Current_Mode.ViewerCode == page_seq + "t") || (RequestSpecificValues.Current_Mode.ViewerCode == page_seq + "x") || (RequestSpecificValues.Current_Mode.ViewerCode == page_seq + "j"))
 						    {
-							    Output.Write("\t\t<li id=\"selected-sf-menu-item-link\"><a href=\"" + link + "\">" + menu_title + "</a>");
+							    Output.Write("\t\t<li class=\"selected-sf-menu-item-link\"><a href=\"" + link + "\">" + menu_title + "</a>");
 						    }
 						    else
 						    {
@@ -1500,7 +1507,7 @@ namespace SobekCM.Library.HTML
                 // Start the item viewer
                 Output.WriteLine("<!-- Begin the left navigational bar -->");
 
-                Output.WriteLine(PageViewer.ItemViewer_Type == ItemViewer_Type_Enum.JPEG2000 || showToc ? "<nav id=\"sbkIsw_Leftnavbar_hack\">" : "<nav id=\"sbkIsw_Leftnavbar\">");
+                Output.WriteLine(PageViewer.ItemViewer_Type == ItemViewer_Type_Enum.JPEG2000 || showToc ? "<nav id=\"sbkIsw_Leftnavbar_hack\" role=\"complementary\">" : "<nav id=\"sbkIsw_Leftnavbar\" role=\"complementary\">");
 
                 //// Compute the URL options which may be needed
                 //string url_options = currentMode.URL_Options();
@@ -1658,6 +1665,7 @@ namespace SobekCM.Library.HTML
 
             // Begin the document display portion
             Output.WriteLine("<!-- Begin the main item viewing area -->");
+            Output.WriteLine("<section id=\"main-content\" role=\"main\">");
             if (behaviors.Contains(HtmlSubwriter_Behaviors_Enum.Item_Subwriter_NonWindowed_Mode))
             {
                 if ( PageViewer != null && PageViewer.Viewer_Height > 0 )
@@ -1798,7 +1806,7 @@ namespace SobekCM.Library.HTML
                                         Output.WriteLine("\t\t\t<div class=\"sbkIsw_PageNavBar2\">");
                                     }
 
-                                    Output.WriteLine("\t\t\t\t<span id=\"sbkIsw_GoToSpan\">" + go_to + "</span>");
+                                    Output.WriteLine("\t\t\t\t<span id=\"sbkIsw_GoToSpan\"><label for=\"page_select\">" + go_to + "</label></span>");
                                     string orig_viewercode = RequestSpecificValues.Current_Mode.ViewerCode;
                                     string viewercode_only = RequestSpecificValues.Current_Mode.ViewerCode.Replace(RequestSpecificValues.Current_Mode.Page.ToString(), "");
                                     RequestSpecificValues.Current_Mode.ViewerCode = "XX1234567890XX";
@@ -2025,6 +2033,7 @@ namespace SobekCM.Library.HTML
                 Output.WriteLine("<tr><td><span id=\"sbkIsw_CheckOutRequired\">This item contains copyrighted material and is reserved for single (fair) use.  Once you finish working with this item,<br />it will return to the digital stacks in fifteen minutes for another patron to use.<br /><br /></span></td></tr>");
             }
             Output.WriteLine("</table>");
+            Output.WriteLine("</section>");
 
             // Add a spot for padding
             Output.WriteLine();
@@ -2034,7 +2043,7 @@ namespace SobekCM.Library.HTML
 
 			// Close the item scope div
 			Output.WriteLine("<!-- Close microdata itemscope div -->");
-			Output.WriteLine("</div>");
+			Output.WriteLine("</section>");
 			Output.WriteLine();
 
 

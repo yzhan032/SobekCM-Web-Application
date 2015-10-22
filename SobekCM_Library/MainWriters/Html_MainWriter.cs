@@ -7,19 +7,12 @@ using System.Text;
 using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
-using SobekCM.Core.Aggregations;
-using SobekCM.Core.Configuration;
 using SobekCM.Core.Navigation;
-using SobekCM.Core.Users;
 using SobekCM.Engine_Library.ApplicationState;
 using SobekCM.Engine_Library.Email;
-using SobekCM.Engine_Library.Navigation;
-using SobekCM.Library.Database;
 using SobekCM.Library.HTML;
-using SobekCM.Library.MySobekViewer;
 using SobekCM.Library.Settings;
 using SobekCM.Library.UI;
-using SobekCM.Resource_Object.Behaviors;
 using SobekCM.Tools;
 
 #endregion
@@ -356,7 +349,7 @@ namespace SobekCM.Library.MainWriters
 		}
 
         /// <summary> Gets the enumeration of the type of main writer </summary>
-        /// <value> This property always returns the enumerational value <see cref="SobekCM.UI_Library.Navigation.Writer_Type_Enum.HTML"/>. </value>
+        /// <value> This property always returns the enumerational value <see cref="Writer_Type_Enum.HTML"/>. </value>
         public override Writer_Type_Enum Writer_Type { get { return Writer_Type_Enum.HTML; } }
 
         /// <summary> Perform all the work of adding to the response stream back to the web user </summary>
@@ -514,7 +507,10 @@ namespace SobekCM.Library.MainWriters
         /// <returns> Title to use in the HTML result document </returns>
         public string Get_Page_Title(Custom_Tracer Tracer)
         {
-            Tracer.Add_Trace("Html_MainWriter.Get_Page_Title", "Getting page title");
+            if (Tracer != null)
+            {
+                Tracer.Add_Trace("Html_MainWriter.Get_Page_Title", "Getting page title");
+            }
 
             string thisTitle = null;
             if (subwriter != null)
@@ -575,7 +571,7 @@ namespace SobekCM.Library.MainWriters
                 subwriter.Write_Within_HTML_Head(Output, RequestSpecificValues.Tracer);
 
             // Include the interface's style sheet if it has one
-            if ((RequestSpecificValues.HTML_Skin != null) && (RequestSpecificValues.HTML_Skin.CSS_Style.Length > 0))
+            if (((RequestSpecificValues.HTML_Skin != null) && (RequestSpecificValues.HTML_Skin.CSS_Style.Length > 0)) && ( RequestSpecificValues.Current_Mode.Mode != Display_Mode_Enum.Simple_HTML_CMS ))
             {
                 Output.WriteLine("  <link href=\"" + RequestSpecificValues.Current_Mode.Base_URL + RequestSpecificValues.HTML_Skin.CSS_Style + "\" rel=\"stylesheet\" type=\"text/css\" />");
             }
@@ -749,6 +745,14 @@ namespace SobekCM.Library.MainWriters
 			// Get the list of behaviors here
 	        List<HtmlSubwriter_Behaviors_Enum> behaviors = subwriter.Subwriter_Behaviors;
 
+            // Include a skip to main content?
+            if (behaviors.Contains(HtmlSubwriter_Behaviors_Enum.Include_Skip_To_Main_Content_Link))
+            {
+                Output.WriteLine("<nav id=\"skip-to-main-content\" role=\"navigation\" aria-label=\"Skip to main content\">");
+                Output.WriteLine("  <a href=\"#main-content\" class=\"hidden-element\">Skip to main content</a>");
+                Output.WriteLine("</nav>");
+            }
+
             //// If no header should be added, just return
             //if (behaviors.Contains(HtmlSubwriter_Behaviors_Enum.Suppress_Header))
             //    return;
@@ -818,7 +822,7 @@ namespace SobekCM.Library.MainWriters
             }
 
             if (!behaviors.Contains(HtmlSubwriter_Behaviors_Enum.Suppress_Header))
-                HeaderFooter_Helper_HtmlSubWriter.Add_Header(Output, RequestSpecificValues, subwriter.Container_CssClass, behaviors);
+                HeaderFooter_Helper_HtmlSubWriter.Add_Header(Output, RequestSpecificValues, subwriter.Container_CssClass, Get_Page_Title(null),  behaviors);
 
             Output.WriteLine(String.Empty);
         }

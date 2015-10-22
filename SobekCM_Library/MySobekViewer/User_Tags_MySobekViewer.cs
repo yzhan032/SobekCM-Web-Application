@@ -6,7 +6,6 @@ using System.IO;
 using System.Linq;
 using SobekCM.Core.Navigation;
 using SobekCM.Core.Users;
-using SobekCM.Engine_Library.Navigation;
 using SobekCM.Library.Database;
 using SobekCM.Library.HTML;
 using SobekCM.Library.MainWriters;
@@ -22,8 +21,8 @@ namespace SobekCM.Library.MySobekViewer
     /// authentication, such as online submittal, metadata editing, and system administrative tasks.<br /><br />
     /// During a valid html request, the following steps occur:
     /// <ul>
-    /// <li>Application state is built/verified by the <see cref="Application_State.Application_State_Builder"/> </li>
-    /// <li>Request is analyzed by the <see cref="Navigation.SobekCM_QueryString_Analyzer"/> and output as a <see cref="Navigation.SobekCM_Navigation_Object"/> </li>
+    /// <li>Application state is built/verified by the Application_State_Builder </li>
+    /// <li>Request is analyzed by the QueryString_Analyzer and output as a <see cref="Navigation_Object"/>  </li>
     /// <li>Main writer is created for rendering the output, in his case the <see cref="Html_MainWriter"/> </li>
     /// <li>The HTML writer will create the necessary subwriter.  Since this action requires authentication, an instance of the  <see cref="MySobek_HtmlSubwriter"/> class is created. </li>
     /// <li>The mySobek subwriter creates an instance of this viewer to display the RequestSpecificValues.Current_User-entered descriptive tags </li>
@@ -41,7 +40,7 @@ namespace SobekCM.Library.MySobekViewer
         public override string Web_Title
         {
             get {
-                return RequestSpecificValues.Current_Mode.My_Sobek_SubMode.Length == 0 ? "My Descriptive Tags" : "Descriptive Tags";
+                return String.IsNullOrEmpty(RequestSpecificValues.Current_Mode.My_Sobek_SubMode) ? "My Descriptive Tags" : "Descriptive Tags";
             }
         }
 
@@ -56,7 +55,7 @@ namespace SobekCM.Library.MySobekViewer
 			Output.WriteLine();
 
             Output.WriteLine("<div class=\"SobekHomeText\">");
-            string submode = RequestSpecificValues.Current_Mode.My_Sobek_SubMode;
+            string submode = String.IsNullOrEmpty(RequestSpecificValues.Current_Mode.My_Sobek_SubMode) ? String.Empty : RequestSpecificValues.Current_Mode.My_Sobek_SubMode;
 
             // Is this either a sys admin or a collection admin/manager
             if ((RequestSpecificValues.Current_User.Is_System_Admin) || (RequestSpecificValues.Current_User.Is_A_Collection_Manager_Or_Admin))

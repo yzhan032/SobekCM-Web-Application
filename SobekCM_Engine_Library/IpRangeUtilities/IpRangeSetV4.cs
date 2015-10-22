@@ -1,5 +1,9 @@
-﻿using System.Collections.Generic;
+﻿#region Using directives
+
+using System.Collections.Generic;
 using System.Linq;
+
+#endregion
 
 namespace SobekCM.Engine_Library.IpRangeUtilities
 {
@@ -150,7 +154,7 @@ namespace SobekCM.Engine_Library.IpRangeUtilities
             }
 
             // Now, just step through the last couple and check for containment
-            for (int i = start_index; i < end_index; i++)
+            for (int i = start_index; i <= end_index; i++)
             {
                 if (values[i].CompareTo(Address) == 0)
                     return true;

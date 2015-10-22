@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Web.UI.WebControls;
 using SobekCM.Core.Navigation;
+using SobekCM.Library.Settings;
 using SobekCM.Tools;
 
 #endregion
@@ -69,7 +70,7 @@ namespace SobekCM.Library.HTML
             Tracer.Add_Trace("Search_Results_HtmlSubwriter.Write_HTML", "Rendering HTML");
 
             // If this skin has top-level navigation suppressed, skip the top tabs
-            if (RequestSpecificValues.HTML_Skin.Suppress_Top_Navigation)
+            if ((RequestSpecificValues.HTML_Skin.Suppress_Top_Navigation.HasValue) && (RequestSpecificValues.HTML_Skin.Suppress_Top_Navigation.Value))
             {
                 Output.WriteLine("<br />");
             }
@@ -127,6 +128,17 @@ namespace SobekCM.Library.HTML
             }
         }
 
+        /// <summary> Gets the collection of special behaviors which this subwriter
+        /// requests from the main HTML subwriter. </summary>
+        /// <remarks> By default, this returns an empty list </remarks>
+        public override List<HtmlSubwriter_Behaviors_Enum> Subwriter_Behaviors
+        {
+            get
+            {
+                return new List<HtmlSubwriter_Behaviors_Enum> { HtmlSubwriter_Behaviors_Enum.Include_Skip_To_Main_Content_Link };
+            }
+        }
+
         /// <summary> Write any additional values within the HTML Head of the
         /// final served page </summary>
         /// <param name="Output"> Output stream currently within the HTML head tags </param>
@@ -134,6 +146,15 @@ namespace SobekCM.Library.HTML
         public override void Write_Within_HTML_Head(TextWriter Output, Custom_Tracer Tracer)
         {
             Output.WriteLine("  <meta name=\"robots\" content=\"index, nofollow\" />");
+
+            // If this is the thumbnails results, add the QTIP script and css
+            if ((RequestSpecificValues.Results_Statistics != null) &&
+                (RequestSpecificValues.Results_Statistics.Total_Items > 0) &&
+                (RequestSpecificValues.Current_Mode.Result_Display_Type == Result_Display_Type_Enum.Thumbnails))
+            {
+                Output.WriteLine("  <script type=\"text/javascript\" src=\"" + Static_Resources.Jquery_Qtip_Js + "\"></script>");
+                Output.WriteLine("  <link rel=\"stylesheet\" type=\"text/css\" href=\"" + Static_Resources.Jquery_Qtip_Css + "\" /> ");
+            }
         }
 
 		/// <summary> Gets the CSS class of the container that the page is wrapped within </summary>

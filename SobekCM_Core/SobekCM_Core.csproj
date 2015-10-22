@@ -32,10 +32,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Jil">
-      <HintPath>..\..\..\..\..\..\..\GitRepository\SobekCM-Web-Application\DLLs\JIL\Jil.dll</HintPath>
+      <HintPath>..\DLLs\JIL\Jil.dll</HintPath>
     </Reference>
     <Reference Include="protobuf-net">
-      <HintPath>..\..\..\..\..\..\..\GitRepository\SobekCM-Web-Application\DLLs\Protobuf-net\protobuf-net.dll</HintPath>
+      <HintPath>..\DLLs\Protobuf-net\protobuf-net.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -43,7 +43,6 @@
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Web" />
     <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
@@ -62,6 +61,7 @@
     <Compile Include="Aggregations\Item_Aggregation_Front_Banner.cs" />
     <Compile Include="Aggregations\Complete_Item_Aggregation_Highlights.cs" />
     <Compile Include="Aggregations\Item_Aggregation_Highlights.cs" />
+    <Compile Include="Aggregations\Item_Aggregation_Map_Coverage_Info.cs" />
     <Compile Include="Aggregations\Item_Aggregation_Metadata_Type.cs" />
     <Compile Include="Aggregations\Item_Aggregation_Related_Aggregations.cs" />
     <Compile Include="Aggregations\Item_Aggregation_Statistics.cs" />
@@ -82,6 +82,7 @@
     <Compile Include="ApplicationState\Template.cs" />
     <Compile Include="ApplicationState\Wordmark_Icon.cs" />
     <Compile Include="BriefItem\BriefItemInfo.cs" />
+    <Compile Include="BriefItem\BriefItem_CitationResponse.cs" />
     <Compile Include="BriefItem\BriefItem_DescriptiveTerm.cs" />
     <Compile Include="BriefItem\BriefItem_DescTermValue.cs" />
     <Compile Include="BriefItem\BriefItem_File.cs" />
@@ -99,42 +100,47 @@
     <Compile Include="Configuration\Web_Language_Enum.cs" />
     <Compile Include="Configuration\Web_Language_Translation_Lookup.cs" />
     <Compile Include="Configuration\Web_Language_Translation_Value.cs" />
-    <Compile Include="Database\SobekCM_Database_Type_Enum.cs" />
     <Compile Include="EmailInfo.cs" />
     <Compile Include="iPostSerialization.cs" />
     <Compile Include="Items\SobekCM_Items_In_Title.cs" />
     <Compile Include="MemoryMgmt\AdoNetHelper\AdoNetFastSerializerSurrogate.cs" />
     <Compile Include="MemoryMgmt\AdoNetHelper\AdoNetHelper.cs" />
     <Compile Include="MemoryMgmt\AdoNetHelper\FastSerializer.cs" />
-    <Compile Include="MemoryMgmt\AppFabric_Manager.cs" />
     <Compile Include="MemoryMgmt\CachedDataManager.cs" />
     <Compile Include="MemoryMgmt\CachedDataManager_AggregationServices.cs" />
     <Compile Include="MemoryMgmt\CachedDataManager_Settings.cs" />
+    <Compile Include="MemoryMgmt\CachedDataManager_WebContentServices.cs" />
     <Compile Include="MemoryMgmt\CachedDataManager_WebSkinServices.cs" />
     <Compile Include="MemoryMgmt\Cached_Object_Info.cs" />
-    <Compile Include="MemoryMgmt\Expiring_Item_Typed_List.cs" />
-    <Compile Include="Message\ErrorRestMessage.cs" />
+    <Compile Include="Message\RestResponseMessage.cs" />
     <Compile Include="MicroservicesClient\MicroservicesClient_Configuration.cs" />
     <Compile Include="MicroservicesClient\MicroservicesClient_Config_Reader.cs" />
     <Compile Include="MicroservicesClient\MicroservicesClient_Endpoint.cs" />
     <Compile Include="MicroservicesClient\MicroservicesClientBase.cs" />
+    <Compile Include="Milestone_Entry.cs" />
     <Compile Include="Navigation\NavigationStateEnums.cs" />
     <Compile Include="Navigation\Navigation_Object.cs" />
     <Compile Include="Navigation\UrlWriterHelper.cs" />
     <Compile Include="OAI\OAI_Record.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ResultTitle\ResultItemInfo.cs" />
+    <Compile Include="ResultTitle\ResultSetPage.cs" />
+    <Compile Include="ResultTitle\ResultTitleInfo.cs" />
     <Compile Include="Results\iSearch_Item_Result.cs" />
     <Compile Include="Results\iSearch_Title_Result.cs" />
     <Compile Include="Results\Multiple_Paged_Results_Args.cs" />
     <Compile Include="Results\Private_Items_List.cs" />
     <Compile Include="Results\Private_Items_List_Item.cs" />
     <Compile Include="Results\Private_Items_List_Title.cs" />
+    <Compile Include="Results\Results_Arguments.cs" />
     <Compile Include="Results\Search_Facet.cs" />
     <Compile Include="Results\Search_Facet_Aggregation.cs" />
+    <Compile Include="Results\Search_Facet_Collection.cs" />
     <Compile Include="Results\Search_Results_Statistics.cs" />
     <Compile Include="Results\Search_Result_Item_Tree.cs" />
     <Compile Include="Results\Search_Result_Item_TreeNode.cs" />
     <Compile Include="Results\Single_Paged_Results_Args.cs" />
+    <Compile Include="ResultTitle\ResultTitle_DescriptiveTerm.cs" />
     <Compile Include="Search\Metadata_Search_Field.cs" />
     <Compile Include="Serialization\iSerializationEvents.cs" />
     <Compile Include="Settings\Builder_Module_Setting.cs" />
@@ -158,10 +164,25 @@
     <Compile Include="Users\User_Group.cs" />
     <Compile Include="Users\User_Group_Member.cs" />
     <Compile Include="Users\User_Object.cs" />
+    <Compile Include="WebContent\Hierarchy\WebContent_Hierarchy.cs" />
+    <Compile Include="WebContent\Hierarchy\WebContent_Hierarchy_Node.cs" />
     <Compile Include="WebContent\HTML_Based_Content.cs" />
     <Compile Include="WebContent\HTML_Based_Content_Reader.cs" />
+    <Compile Include="WebContent\Single\Single_WebContent_Change_Report.cs" />
+    <Compile Include="WebContent\Single\Single_WebContent_Usage.cs" />
+    <Compile Include="WebContent\Admin\WebContent_Basic_Pages.cs" />
+    <Compile Include="WebContent\Admin\WebContent_Page_Usage.cs" />
+    <Compile Include="WebContent\Admin\WebContent_Recent_Changed_Page.cs" />
+    <Compile Include="WebContent\Admin\WebContent_Recent_Changes.cs" />
+    <Compile Include="WebContent\Single\Single_WebContent_Usage_Report.cs" />
+    <Compile Include="WebContent\WebContent_Basic_Info.cs" />
+    <Compile Include="WebContent\Admin\WebContent_Usage_Report.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\EngineAgnosticLayerDbAccess\EngineAgnosticLayerDbAccess.csproj">
+      <Project>{b481ce6e-05fd-4336-9524-64d057aab107}</Project>
+      <Name>EngineAgnosticLayerDbAccess</Name>
+    </ProjectReference>
     <ProjectReference Include="..\SobekCM_Resource_Object\SobekCM_Resource_Object.csproj">
       <Project>{395c2621-ce19-41e0-aa1a-abdb37f6e815}</Project>
       <Name>SobekCM_Resource_Object</Name>

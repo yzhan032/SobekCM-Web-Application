@@ -7,7 +7,6 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Web;
-using System.Web.Caching;
 using SobekCM.Core.Aggregations;
 using SobekCM.Core.ApplicationState;
 using SobekCM.Core.Client;
@@ -21,14 +20,13 @@ using SobekCM.Core.SiteMap;
 using SobekCM.Core.Skins;
 using SobekCM.Core.Users;
 using SobekCM.Core.WebContent;
-using SobekCM.Engine_Library.ApplicationState;
 using SobekCM.Engine_Library.Aggregations;
+using SobekCM.Engine_Library.ApplicationState;
 using SobekCM.Engine_Library.Database;
 using SobekCM.Engine_Library.Items;
 using SobekCM.Engine_Library.SiteMap;
 using SobekCM.Engine_Library.Solr;
 using SobekCM.Library.Database;
-using SobekCM.Engine_Library.Skins;
 using SobekCM.Library.UI;
 using SobekCM.Resource_Object;
 using SobekCM.Resource_Object.Divisions;
@@ -60,43 +58,87 @@ namespace SobekCM.Library
             }
 
             Site_Map = null;
-
-            string source = Current_Mode.Page_By_FileName;
-           
-
-            //// Look for a site map
-            //if ( !String.IsNullOrEmpty(Simple_Web_Content.SiteMap))
-            //{
-            //    // Look in the cache first
-            //    Site_Map = CachedDataManager.Retrieve_Site_Map(Simple_Web_Content.SiteMap, Tracer);
-
-            //    // If this was NULL, pull it
-            //    if (Site_Map == null)
-            //    {
-            //        // Only continue if the file exists
-            //        if (File.Exists(UI_ApplicationCache_Gateway.Settings.Base_Directory + "design\\webcontent\\" + Simple_Web_Content.SiteMap))
-            //        {
-            //            if (Tracer != null)
-            //            {
-            //                Tracer.Add_Trace("SobekCM_Assistant.Get_Simple_Web_Content_Text", "Reading site map file");
-            //            }
-
-            //            // Try to read this sitemap file
-            //            Site_Map = SobekCM_SiteMap_Reader.Read_SiteMap_File(UI_ApplicationCache_Gateway.Settings.Base_Directory + "design\\webcontent\\" + Simple_Web_Content.SiteMap);
-
-            //            // If the sitemap file was succesfully read, cache it
-            //            if (Site_Map != null)
-            //            {
-            //                CachedDataManager.Store_Site_Map(Site_Map, Simple_Web_Content.SiteMap, Tracer);
-            //            }
-            //        }
-            //    }
-            //}
-
-            //// Since this is not cached, we can apply the individual user settings to the static text which was read right here
-            //Simple_Web_Content.Content = Simple_Web_Content.Apply_Settings_To_Static_Text(Simple_Web_Content.Content, null, Current_Mode.Skin, Current_Mode.Base_Skin_Or_Skin, Current_Mode.Base_URL, UrlWriterHelper.URL_Options(Current_Mode), Tracer);
-
             Simple_Web_Content = null;
+
+            // Get the web content object
+            if ((( Current_Mode.WebContentID.HasValue ) && ( Current_Mode.WebContentID.Value > 0 )) && (( !Current_Mode.Missing.HasValue ) || ( !Current_Mode.Missing.Value )))
+                Simple_Web_Content = SobekEngineClient.WebContent.Get_HTML_Based_Content(Current_Mode.WebContentID.Value, true, Tracer);
+
+            // If somehow this is null and this was for DEFAULT, just add the page
+            if (Simple_Web_Content == null)
+            {
+                Simple_Web_Content = SobekEngineClient.WebContent.Get_Special_Missing_Page(Tracer);
+            }
+
+            if (Simple_Web_Content == null)
+            {
+                Current_Mode.Error_Message = "Unable to retrieve simple text item '" + Current_Mode.Info_Browse_Mode.Replace("_", "\\") + "'";
+                return false;
+            }
+
+            // If this is a redirect, just return 
+            if (!String.IsNullOrEmpty(Simple_Web_Content.Redirect))
+                return true;
+
+            if ( String.IsNullOrEmpty(Simple_Web_Content.Content))
+            {
+                Current_Mode.Error_Message = "Unable to read the file for display";
+                return false;
+            }
+
+            // Look for a site map
+            if (!String.IsNullOrEmpty(Simple_Web_Content.SiteMap))
+            {
+                // Look in the cache first
+                Site_Map = CachedDataManager.Retrieve_Site_Map(Simple_Web_Content.SiteMap, Tracer);
+
+                // If this was NULL, pull it
+                if (Site_Map == null)
+                {
+                    string sitemap_file = Simple_Web_Content.SiteMap;
+                    if (!sitemap_file.ToLower().Contains(".sitemap"))
+                        sitemap_file = sitemap_file + ".sitemap";
+
+                    // Only continue if the file exists
+                    if (File.Exists(UI_ApplicationCache_Gateway.Settings.Base_Directory + "design\\webcontent\\sitemaps\\" + sitemap_file))
+                    {
+                        if (Tracer != null)
+                        {
+                            Tracer.Add_Trace("SobekCM_Assistant.Get_Simple_Web_Content_Text", "Reading site map file");
+                        }
+
+                        // Try to read this sitemap file
+                        Site_Map = SobekCM_SiteMap_Reader.Read_SiteMap_File(UI_ApplicationCache_Gateway.Settings.Base_Directory + "design\\webcontent\\sitemaps\\" + sitemap_file);
+
+                        // If the sitemap file was succesfully read, cache it
+                        if (Site_Map != null)
+                        {
+                            CachedDataManager.Store_Site_Map(Site_Map, Simple_Web_Content.SiteMap, Tracer);
+                        }
+                    }
+                    else if (File.Exists(UI_ApplicationCache_Gateway.Settings.Base_Directory + "design\\webcontent\\" + sitemap_file))
+                    {
+                        // This is just for some legacy material
+                        if (Tracer != null)
+                        {
+                            Tracer.Add_Trace("SobekCM_Assistant.Get_Simple_Web_Content_Text", "Reading site map file");
+                        }
+
+                        // Try to read this sitemap file
+                        Site_Map = SobekCM_SiteMap_Reader.Read_SiteMap_File(UI_ApplicationCache_Gateway.Settings.Base_Directory + "design\\webcontent\\" + sitemap_file);
+
+                        // If the sitemap file was succesfully read, cache it
+                        if (Site_Map != null)
+                        {
+                            CachedDataManager.Store_Site_Map(Site_Map, Simple_Web_Content.SiteMap, Tracer);
+                        }
+                    }
+                }
+            }
+
+            // Since this is not cached, we can apply the individual user settings to the static text which was read right here
+            Simple_Web_Content.Content = Simple_Web_Content.Apply_Settings_To_Static_Text(Simple_Web_Content.Content, null, Current_Mode.Skin, Current_Mode.Base_Skin, Current_Mode.Base_URL, UrlWriterHelper.URL_Options(Current_Mode), Tracer);
+
             return true;
         }
 
@@ -520,6 +562,7 @@ namespace SobekCM.Library
         /// <param name="All_Items_Lookup"> Lookup object used to pull basic information about any item loaded into this library </param>
         /// <param name="Base_URL"> Base URL for all the digital resource files for items to display </param>
         /// <param name="Icon_Table"> Dictionary of all the wordmark/icons which can be tagged to the items </param>
+        /// <param name="Item_Viewer_Priority"> List of the globally defined item viewer priorities  </param>
         /// <param name="Current_User"> Currently logged on user information (used when editing an item)</param>
         /// <param name="Tracer"> Trace object keeps a list of each method executed and important milestones in rendering </param>
         /// <param name="Current_Item"> [OUT] Built single digital resource ready for displaying or editing </param>
@@ -550,6 +593,7 @@ namespace SobekCM.Library
         /// <param name="Base_URL"> Base URL for all the digital resource files for items to display </param>
         /// <param name="Icon_Table"> Dictionary of all the wordmark/icons which can be tagged to the items </param>
         /// <param name="Current_User"> Currently logged on user information (used when editing an item)</param>
+        /// <param name="Item_Viewer_Priority"> List of the globally defined item viewer priorities </param>
         /// <param name="Tracer"> Trace object keeps a list of each method executed and important milestones in rendering </param>
         /// <param name="Current_Item"> [OUT] Built single digital resource ready for displaying or editing </param>
         /// <param name="Current_Page"> [OUT] Build current page for display </param>
@@ -760,12 +804,14 @@ namespace SobekCM.Library
         /// <param name="Current_Mode"> Mode / navigation information for the current request</param>
         /// <param name="All_Items_Lookup"> Lookup object used to pull basic information about any item loaded into this library </param>
         /// <param name="Aggregation_Object"> Object for the current aggregation object, against which this search is performed </param>
+        /// <param name="Search_Stop_Words"> List of search stop workds </param>
         /// <param name="Tracer"> Trace object keeps a list of each method executed and important milestones in rendering </param>
         /// <param name="Complete_Result_Set_Info"> [OUT] Information about the entire set of results </param>
         /// <param name="Paged_Results"> [OUT] List of search results for the requested page of results </param>
         public void Get_Search_Results(Navigation_Object Current_Mode,
                                        Item_Lookup_Object All_Items_Lookup,
-                                       Item_Aggregation Aggregation_Object, List<string> Search_Stop_Words,
+                                       Item_Aggregation Aggregation_Object, 
+                                       List<string> Search_Stop_Words,
                                        Custom_Tracer Tracer,
                                        out Search_Results_Statistics Complete_Result_Set_Info,
                                        out List<iSearch_Title_Result> Paged_Results )
@@ -788,7 +834,14 @@ namespace SobekCM.Library
             // Depending on type of search, either go to database or Greenstone
 	        if (Current_Mode.Search_Type == Search_Type_Enum.Map)
 	        {
-		        try
+                // If this is showing in the map, only allow sot zero, which is by coordinates
+	            if ((Current_Mode.Result_Display_Type == Result_Display_Type_Enum.Map) || (Current_Mode.Result_Display_Type == Result_Display_Type_Enum.Default))
+	            {
+	                Current_Mode.Sort = 0;
+	                sort = 0;
+	            }
+
+	            try
 		        {
 			        double lat1 = 1000;
 			        double long1 = 1000;
@@ -1322,10 +1375,7 @@ namespace SobekCM.Library
                     }
                     else
                     {
-                        if (i != 0)
-                        {
-                            links.Add(0);
-                        }
+                        links.Add(0);
                     }
 
                     // Find the db field number
@@ -1706,59 +1756,23 @@ namespace SobekCM.Library
         /// <param name="Web_Skin_Code"> Web skin code </param>
         /// <param name="Current_Mode"> Mode / navigation information for the current request</param>
         /// <param name="Skin_Collection"> Collection of the most common skins and source information for all the skins made on the fly </param>
-		/// <param name="Cache_On_Build"> Flag indicates if this should be added to the ASP.net (or caching server) cache </param>
+        /// <param name="Cache_On_Build"> Flag indicates if this should be added to the ASP.net (or caching server) cache </param>
         /// <param name="Tracer"> Trace object keeps a list of each method executed and important milestones in rendering </param>
         /// <returns> Fully-built object used to "skin" this digital library </returns>
-        public Web_Skin_Object Get_HTML_Skin( string Web_Skin_Code, Navigation_Object Current_Mode, Web_Skin_Collection Skin_Collection, bool Cache_On_Build, Custom_Tracer Tracer )
+        public Web_Skin_Object Get_HTML_Skin(string Web_Skin_Code, Navigation_Object Current_Mode, Web_Skin_Collection Skin_Collection, bool Cache_On_Build, Custom_Tracer Tracer)
         {
             // Get the interface object
-            Web_Skin_Object htmlSkin = null;
-
-            // If no interface yet, look in the cache
-            if (( Web_Skin_Code != "new") && ( Cache_On_Build ))
-            {
-                htmlSkin = CachedDataManager.WebSkins.Retrieve_Skin(Web_Skin_Code, Current_Mode.Language_Code, Tracer);
-                if (htmlSkin != null)
-                {
-	                if (Tracer != null)
-	                {
-		                Tracer.Add_Trace("SobekCM_Assistant.Get_HTML_Skin", "Web skin '" + Web_Skin_Code + "' found in cache");
-	                }
-                    if ((!String.IsNullOrEmpty(htmlSkin.Base_Skin_Code)) && (htmlSkin.Base_Skin_Code != htmlSkin.Skin_Code))
-    	                Current_Mode.Base_Skin = htmlSkin.Base_Skin_Code;
-                    return htmlSkin;
-                }
-            }
-
-            // If still not interface, build one
-            DataRow skin_row = Skin_Collection.Skin_Row(Web_Skin_Code);
-            if (skin_row != null)
-            {
-	            if (Tracer != null)
-	            {
-		            Tracer.Add_Trace("SobekCM_Assistant.Get_HTML_Skin", "Building web skin '" + Web_Skin_Code + "'");
-	            }
-
-	            Web_Skin_Object new_skin = Web_Skin_Utilities.Build_Skin(skin_row, Current_Mode.Language_Code );
-
-                // Look in the web skin row and see if it should be kept around, rather than momentarily cached
-                if (new_skin != null)
-                {
-                    if ( Cache_On_Build )
-                    {
-                        // Momentarily cache this web skin object
-                        CachedDataManager.WebSkins.Store_Skin(Web_Skin_Code, Current_Mode.Language_Code, new_skin, Tracer);
-                    }
-
-                    htmlSkin = new_skin;
-                }
-            }
+            Web_Skin_Object htmlSkin = SobekEngineClient.WebSkins.Get_LanguageSpecific_Web_Skin(Web_Skin_Code, Current_Mode.Language, UI_ApplicationCache_Gateway.Settings.Default_UI_Language, Cache_On_Build, Tracer);
 
             // If there is still no interface, this is an ERROR
             if (htmlSkin != null)
             {
-                if (( !String.IsNullOrEmpty(htmlSkin.Base_Skin_Code)) && ( htmlSkin.Base_Skin_Code != htmlSkin.Skin_Code ))
+                if ((!String.IsNullOrEmpty(htmlSkin.Base_Skin_Code)) && (htmlSkin.Base_Skin_Code != htmlSkin.Skin_Code))
                     Current_Mode.Base_Skin = htmlSkin.Base_Skin_Code;
+            }
+            else
+            {
+                Tracer.Add_Trace("SobekCM_Assistant.Get_HTML_Skin", "SobekEngineClient returned NULL for the requested web skin");
             }
 
             // Return the value

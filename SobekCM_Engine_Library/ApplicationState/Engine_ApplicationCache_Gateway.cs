@@ -9,6 +9,7 @@ using SobekCM.Core.Configuration;
 using SobekCM.Core.Settings;
 using SobekCM.Core.Skins;
 using SobekCM.Core.Users;
+using SobekCM.Core.WebContent.Hierarchy;
 using SobekCM.Engine_Library.Database;
 using SobekCM.Engine_Library.Settings;
 using SobekCM.Engine_Library.Skins;
@@ -17,6 +18,8 @@ using SobekCM.Engine_Library.Skins;
 
 namespace SobekCM.Engine_Library.ApplicationState
 {
+    /// <summary> Class stores all the application-wide setting information as well as basic values
+    /// for most of the main object types used by the system </summary>
     public static class Engine_ApplicationCache_Gateway
     {
         /// <summary> Constructor for this gateway class, which sets the last refresh time </summary>
@@ -25,13 +28,14 @@ namespace SobekCM.Engine_Library.ApplicationState
             Last_Refresh = DateTime.Now;
         }
 
-        public static DateTime? Last_Refresh;
+        /// <summary> Last time the date time value was refreshed </summary>
+        public static DateTime? Last_Refresh { get; private set; }
 
-        public static void ClearAll()
-        {
-            Last_Refresh = DateTime.Now;
-        }
 
+
+        /// <summary> Refress all of the settings within this gateway </summary>
+        /// <param name="DbInstance"> Database instance to use when pulling the new data  </param>
+        /// <returns> TRUE if successful, FALSE if any errors occurred </returns>
         public static bool RefreshAll( Database_Instance_Configuration DbInstance )
         {
             bool error = !RefreshSettings(DbInstance);
@@ -50,10 +54,15 @@ namespace SobekCM.Engine_Library.ApplicationState
             error = error | !RefreshIcons();
             error = error | !RefreshDefaultMetadataTemplates();
             error = error | !RefreshUrlPortals();
+            error = error | !RefreshWebContentHierarchy();
+
+            Last_Refresh = DateTime.Now;
 
             return !error;
         }
         
+        /// <summary> Refress all of the settings within this gateway </summary>
+        /// <returns> TRUE if successful, FALSE if any errors occurred </returns>
         public static bool RefreshAll()
         {
             bool error = !RefreshSettings();
@@ -72,6 +81,9 @@ namespace SobekCM.Engine_Library.ApplicationState
             error = error | !RefreshIcons();
             error = error | !RefreshDefaultMetadataTemplates();
             error = error | !RefreshUrlPortals();
+            error = error | !RefreshWebContentHierarchy();
+
+            Last_Refresh = DateTime.Now;
 
             return !error;
         }
@@ -920,6 +932,7 @@ namespace SobekCM.Engine_Library.ApplicationState
             }  
         }
 
+        /// <summary> List of all the globally defined default metadata sets for this instance </summary>
         public static List<Default_Metadata> Global_Default_Metadata
         {
             get
@@ -936,6 +949,7 @@ namespace SobekCM.Engine_Library.ApplicationState
             }
         }
 
+        /// <summary> List of all the globally defined metadata templates within this instance </summary>
         public static List<Template> Templates
         {
             get
@@ -952,11 +966,72 @@ namespace SobekCM.Engine_Library.ApplicationState
             }
         }
 
+        /// <summary> Clears the lists of globally defined default metadata sets and metadata input templates, so they 
+        /// will be refreshed next time they are requested </summary>
+        /// <returns> TRUE </returns>
         public static bool RefreshDefaultMetadataTemplates()
         {
             defaultMetadataList = null;
             templateList = null;
             return true;
+        }
+
+        #endregion
+
+        #region Properties and methods related to the hierarchy of non-aggregational web content pages
+
+        private static WebContent_Hierarchy webContentHierarchy;
+        private static readonly Object webContentHierarchyLock = new Object();
+
+        /// <summary> Refresh the hierarchy of non-aggregational web content pages by pulling the data back from the database </summary>
+        /// <returns> TRUE if successful, otherwise FALSE </returns>
+        public static bool RefreshWebContentHierarchy()
+        {
+            try
+            {
+                lock (webContentHierarchyLock)
+                {
+                    // Either create a new hierarchy object , or clear the existing
+                    if (webContentHierarchy == null)
+                        webContentHierarchy = new WebContent_Hierarchy();
+                    else
+                        webContentHierarchy.Clear();
+
+                    if (!Engine_Database.WebContent_Populate_All_Hierarchy(webContentHierarchy, null))
+                    {
+                        webContentHierarchy = null;
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        /// <summary> Get the complete hierarchy of non-aggregational web content pages and redirects, used for navigation </summary>
+        public static WebContent_Hierarchy WebContent_Hierarchy
+        {
+            get
+            {
+                lock (webContentHierarchyLock)
+                {
+                    if (webContentHierarchy == null)
+                    {
+                        webContentHierarchy = new WebContent_Hierarchy();
+                        if (!Engine_Database.WebContent_Populate_All_Hierarchy(webContentHierarchy, null))
+                        {
+                            webContentHierarchy = null;
+                            throw Engine_Database.Last_Exception;
+                        }
+                    }
+
+                    return webContentHierarchy;
+                }
+            }
         }
 
         #endregion

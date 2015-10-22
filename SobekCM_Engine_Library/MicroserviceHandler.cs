@@ -1,33 +1,50 @@
-﻿using System;
+﻿#region Using directives
+
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Web;
 using SobekCM.Engine_Library.ApplicationState;
 using SobekCM.Engine_Library.Database;
 using SobekCM.Engine_Library.Microservices;
-using SobekCM.Resource_Object.Database;
+
+#endregion
 
 namespace SobekCM.Engine_Library
 {
+    /// <summary> Handler is used to handle any incoming requests for a microservice exposed by the engine </summary>
     public class MicroserviceHandler : IHttpHandler
     {
-        private Microservices_Configuration microserviceConfig;
-
-        public void ProcessRequest(HttpContext context)
+        private Microservice_Server_Configuration microserviceConfig;
+        
+        /// <summary> Processes the request </summary>
+        /// <param name="Context">The context for the current request </param>
+        public void ProcessRequest(HttpContext Context)
         {
             Engine_Database.Connection_String = Engine_ApplicationCache_Gateway.Settings.Database_Connections[0].Connection_String;
 
             // Get the original query string
-            string queryString = context.Request.QueryString["urlrelative"];
+            string queryString = Context.Request.QueryString["urlrelative"];
             if (!String.IsNullOrEmpty(queryString))
             {
                 // Make sure the microservices configuration has been read
                 if (microserviceConfig == null)
                 {
-                    string path = context.Server.MapPath("config/default/sobekcm_engine.config");
-                    microserviceConfig = Microservices_Config_Reader.Read_Config(path);
+                    string default_path = Context.Server.MapPath("config/default/sobekcm_engine.config");
+                    string user_path = Context.Server.MapPath("config/user/sobekcm_engine.config");
+                    if (File.Exists(user_path))
+                    {
+                        string[] config_paths = {default_path, user_path};
+                        microserviceConfig = Microservice_Server_Config_Reader.Read_Config(config_paths);
+                        
+                    }
+                    else
+                    {
+                        microserviceConfig = Microservice_Server_Config_Reader.Read_Config(default_path);
+                    }
+                    
                 }
 
                 // Collect the requested paths
@@ -39,66 +56,96 @@ namespace SobekCM.Engine_Library
                 List<string> paths = splitter.ToList();
 
                 // Set the encoding
-                context.Response.Charset = Encoding.UTF8.WebName;
+                Context.Response.Charset = Encoding.UTF8.WebName;
 
                 // Set this to allow us to have our own error messages, without IIS jumping into it
-                context.Response.TrySkipIisCustomErrors = true;
+                Context.Response.TrySkipIisCustomErrors = true;
 
                 // Get any matching endpoint configuration
                 Microservice_Endpoint endpoint = microserviceConfig.Get_Endpoint(paths);
                 if (endpoint == null)
                 {
-                    context.Response.ContentType = "text/plain";
-                    context.Response.StatusCode = 501;
-                    context.Response.Write("No endpoint found");
+                    Context.Response.ContentType = "text/plain";
+                    Context.Response.StatusCode = 501;
+                    Context.Response.Write("No endpoint found");
                     
                 }
                 else
                 {
-                    // Ensure this is allowed in the range
-                    string requestIp = context.Request.UserHostAddress;
-                    if (!endpoint.AccessPermitted(requestIp))
+                    string method =  Context.Request.HttpMethod.ToUpper();
+                    if (!endpoint.VerbMappingExists(method))
                     {
-                        context.Response.ContentType = "text/plain";
-                        context.Response.StatusCode = 403;
-                        context.Response.Write("You are forbidden from accessing this endpoint");
+                        Context.Response.ContentType = "text/plain";
+                        Context.Response.StatusCode = 406;
+                        Context.Response.Write("HTTP method " + method + " is not supported by this URL");
+                        return;
+                    }
+
+                    // Get the specific verb mapping
+                    Microservice_VerbMapping verbMapping = endpoint[method];
+
+                    // Ensure this is allowed in the range
+                    string requestIp = Context.Request.UserHostAddress;
+                    if (!verbMapping.AccessPermitted(requestIp))
+                    {
+                        Context.Response.ContentType = "text/plain";
+                        Context.Response.StatusCode = 403;
+                        Context.Response.Write("You are forbidden from accessing this endpoint");
                         return;
                     }
 
                     // Set the protocoal
-                    if (endpoint.Protocol == Microservice_Endpoint_Protocol_Enum.JSON)
-                        context.Response.ContentType = "application/json";
-                    if (endpoint.Protocol == Microservice_Endpoint_Protocol_Enum.JSON_P)
-                        context.Response.ContentType = "application/javascript";
-                    if (endpoint.Protocol == Microservice_Endpoint_Protocol_Enum.PROTOBUF)
-                        context.Response.ContentType = "application/octet-stream";
-                    if (endpoint.Protocol == Microservice_Endpoint_Protocol_Enum.XML)
-                        context.Response.ContentType = "text/xml";
-                    if (endpoint.Protocol == Microservice_Endpoint_Protocol_Enum.SOAP)
-                        context.Response.ContentType = "text/xml";
-                    if (endpoint.Protocol == Microservice_Endpoint_Protocol_Enum.BINARY)
-                        context.Request.ContentType = "application/octet-stream";
+                    switch (verbMapping.Protocol)
+                    {
+                        case Microservice_Endpoint_Protocol_Enum.JSON:
+                            Context.Response.ContentType = "application/json";
+                            break;
+
+                        case Microservice_Endpoint_Protocol_Enum.JSON_P:
+                            Context.Response.ContentType = "application/javascript";
+                            break;
+
+                        case Microservice_Endpoint_Protocol_Enum.PROTOBUF:
+                            Context.Response.ContentType = "application/octet-stream";
+                            break;
+
+                        case Microservice_Endpoint_Protocol_Enum.XML:
+                            Context.Response.ContentType = "text/xml";
+                            break;
+
+                        case Microservice_Endpoint_Protocol_Enum.SOAP:
+                            Context.Response.ContentType = "text/xml";
+                            break;
+
+                        case Microservice_Endpoint_Protocol_Enum.BINARY:
+                            Context.Response.ContentType = "application/octet-stream";
+                            break;
+                    }
+
+                    // Determine if this is currently in a valid DEBUG mode
+                    bool debug = (Context.Request.QueryString["debug"] == "debug");
 
                     try
                     {
-                        endpoint.Invoke(context.Response, paths, context.Request.QueryString, context.Request.Form);
+                        verbMapping.Invoke(Context.Response, paths, Context.Request.QueryString, Context.Request.Form, debug);
                     }
                     catch (Exception ee)
                     {
-                        context.Response.ContentType = "text/plain";
-                        context.Response.Output.WriteLine("Error invoking the exception method: " + ee.Message);
-                        context.Response.StatusCode = 500;
+                        Context.Response.ContentType = "text/plain";
+                        Context.Response.Output.WriteLine("Error invoking the exception method: " + ee.Message);
+                        Context.Response.StatusCode = 500;
                     }
                 }
             }
             else
             {
-                context.Response.ContentType = "text/plain";
-                context.Response.StatusCode = 400;
-                context.Response.Write("Invalid URI - No endpoint requested");
+                Context.Response.ContentType = "text/plain";
+                Context.Response.StatusCode = 400;
+                Context.Response.Write("Invalid URI - No endpoint requested");
             }
         }
 
+        /// <summary> Gets a value indicating whether another request can use the <see cref="T:System.Web.IHttpHandler" /> instance. </summary>
         public bool IsReusable { get { return true;  } }
     }
 }

@@ -3,13 +3,17 @@
 using System;
 using System.IO;
 
-
 #endregion
 
 namespace SobekCM.Builder_Library.Modules.Items
 {
+    /// <summary> Item-level submission package module updates the item-level web.config file based on restriction information </summary>
+    /// <remarks> This class implements the <see cref="abstractSubmissionPackageModule" /> abstract class and implements the <see cref="iSubmissionPackageModule" /> interface. </remarks>
     public class UpdateWebConfigModule : abstractSubmissionPackageModule
     {
+        /// <summary> Updates the item-level web.config file based on restriction information </summary>
+        /// <param name="Resource"> Incoming digital resource object </param>
+        /// <returns> TRUE if processing can continue, FALSE if a critical error occurred which should stop all processing </returns>
         public override bool DoWork(Incoming_Digital_Resource Resource)
         {
             // Delete any existing web.config file and write is as necessary

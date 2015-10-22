@@ -5,6 +5,7 @@ using System.IO;
 using System.Net;
 using System.Text;
 using System.Xml;
+using Microsoft.SqlServer.Server;
 using SobekCM.Tools;
 
 #endregion
@@ -45,11 +46,21 @@ namespace SobekCM.Core.WebContent
                     sr.Close();
                 }
 
+                if (Tracer != null)
+                {
+                    Tracer.Add_Trace("HTML_Based_Content_Reader.Read_Web_Document", "Succesfully read the source via web response");
+                }
+
                 // Convert this to the object
-                return Text_To_HTML_Based_Content(displayText, Retain_Entire_Display_Text, String.Empty);
+                return Text_To_HTML_Based_Content(displayText, Retain_Entire_Display_Text, String.Empty, Tracer );
             }
-            catch
+            catch ( Exception ee )
             {
+                if (Tracer != null)
+                {
+                    Tracer.Add_Trace("HTML_Based_Content_Reader.Read_Web_Document", "EXCEPTION caught reading source via web response " + ee.Message);
+                }
+
                 return null;
             }
         }
@@ -75,16 +86,26 @@ namespace SobekCM.Core.WebContent
                 string displayText = reader.ReadToEnd();
                 reader.Close();
 
+                if (Tracer != null)
+                {
+                    Tracer.Add_Trace("HTML_Based_Content_Reader.Read_HTML_File", "Succesfully read the source file");
+                }
+
                 // Convert this to the object
-                return Text_To_HTML_Based_Content(displayText, Retain_Entire_Display_Text, Source_File);
+                return Text_To_HTML_Based_Content(displayText, Retain_Entire_Display_Text, Source_File, Tracer);
             }
-            catch
+            catch ( Exception ee )
             {
+                if (Tracer != null)
+                {
+                    Tracer.Add_Trace("HTML_Based_Content_Reader.Read_HTML_File", "EXCEPTION caught reading source file " + ee.Message );
+                }
+
                 return null;
             }
         }
 
-        private static HTML_Based_Content Text_To_HTML_Based_Content(string Display_Text, bool Retain_Entire_Display_Text, string Source)
+        private static HTML_Based_Content Text_To_HTML_Based_Content(string Display_Text, bool Retain_Entire_Display_Text, string Source, Custom_Tracer Tracer )
         {
             // Create the values to hold the information
             string code = String.Empty;
@@ -98,20 +119,32 @@ namespace SobekCM.Core.WebContent
             string sitemap = String.Empty;
             string webskin = String.Empty;
             bool includeMenu = false;
+            string sobekControlledJavascript = String.Empty;
+            string sobekControlledCss = String.Empty;
 
             // StringBuilder keeps track of any other information in the head that should be retained
             StringBuilder headBuilder = new StringBuilder();
 
             HTML_Based_Content returnValue = new HTML_Based_Content();
 
+            if (Tracer != null)
+            {
+                Tracer.Add_Trace("HTML_Based_Content_Reader.Text_To_HTML_Based_Content", "Converting source file content into object" );
+            }
+
             // Try to read the head using XML
             int head_start = Display_Text.IndexOf("<head>", StringComparison.OrdinalIgnoreCase);
             int head_end = Display_Text.IndexOf("</head>", StringComparison.OrdinalIgnoreCase);
-            bool read_as_xml = false;
             if ((head_start >= 0) && (head_end > head_start))
             {
+                bool read_as_xml;
                 try
                 {
+                    if (Tracer != null)
+                    {
+                        Tracer.Add_Trace("HTML_Based_Content_Reader.Text_To_HTML_Based_Content", "Attempting to read the html head as XML");
+                    }
+
                     string head_xml = Display_Text.Substring(head_start, (head_end - head_start) + 7);
                     XmlTextReader xmlReader = new XmlTextReader(new StringReader(head_xml));
                     while (xmlReader.Read())
@@ -121,14 +154,43 @@ namespace SobekCM.Core.WebContent
                         switch (xmlReader.Name.ToUpper())
                         {
                             case "LINK":
-                                headBuilder.Append("<link ");
-                                int attributeCount = xmlReader.AttributeCount;
-                                for (int i = 0; i < attributeCount; i++)
+                                // Was this the controlled link?
+                                if ((xmlReader.MoveToAttribute("id")) && (xmlReader.Value == "SobekCmControlledCss"))
                                 {
-                                    xmlReader.MoveToAttribute(i);
-                                    headBuilder.Append(xmlReader.Name + "=\"" + xmlReader.Value + "\" ");
+                                    if (xmlReader.MoveToAttribute("href"))
+                                        sobekControlledCss = xmlReader.Value;
                                 }
-                                headBuilder.AppendLine(" />");
+                                else
+                                {
+                                    headBuilder.Append("<link ");
+                                    int attributeCount = xmlReader.AttributeCount;
+                                    for (int i = 0; i < attributeCount; i++)
+                                    {
+                                        xmlReader.MoveToAttribute(i);
+                                        headBuilder.Append(xmlReader.Name + "=\"" + xmlReader.Value + "\" ");
+                                    }
+                                    headBuilder.AppendLine(" />");
+                                }
+                                break;
+
+                            case "SCRIPT":
+                                // Was this the controlled link?
+                                if ((xmlReader.MoveToAttribute("id")) && (xmlReader.Value == "SobekCmControlledJavascript"))
+                                {
+                                    if (xmlReader.MoveToAttribute("src"))
+                                        sobekControlledJavascript = xmlReader.Value;
+                                }
+                                else
+                                {
+                                    headBuilder.Append("<script ");
+                                    int attributeCount = xmlReader.AttributeCount;
+                                    for (int i = 0; i < attributeCount; i++)
+                                    {
+                                        xmlReader.MoveToAttribute(i);
+                                        headBuilder.Append(xmlReader.Name + "=\"" + xmlReader.Value + "\" ");
+                                    }
+                                    headBuilder.AppendLine("></script>");
+                                }
                                 break;
 
                             case "TITLE":
@@ -209,6 +271,10 @@ namespace SobekCM.Core.WebContent
                 }
                 catch
                 {
+                    if (Tracer != null)
+                    {
+                        Tracer.Add_Trace("HTML_Based_Content_Reader.Text_To_HTML_Based_Content", "Was unable to read the html head as XML");
+                    }
                     read_as_xml = false;
                 }
 
@@ -216,8 +282,12 @@ namespace SobekCM.Core.WebContent
                 // Read this the old way if unable to read via XML for some reason
                 if (!read_as_xml)
                 {
-                    // Get the title and code
+                    if (Tracer != null)
+                    {
+                        Tracer.Add_Trace("HTML_Based_Content_Reader.Text_To_HTML_Based_Content", "Attempting to parse html head for title, code, and banner information");
+                    }
 
+                    // Get the title and code
                     string header_info = Display_Text.Substring(0, Display_Text.IndexOf("<body>"));
                     if (header_info.IndexOf("<title>") > 0)
                     {
@@ -264,11 +334,27 @@ namespace SobekCM.Core.WebContent
                     returnValue.Extra_Head_Info = headBuilder.ToString();
                 if (includeMenu)
                     returnValue.IncludeMenu = true;
+                if (sobekControlledCss.Length > 0)
+                    returnValue.CssFile = sobekControlledCss;
+                if (sobekControlledJavascript.Length > 0)
+                    returnValue.JavascriptFile = sobekControlledJavascript;
+            }
+            else
+            {
+                if (Tracer != null)
+                {
+                    Tracer.Add_Trace("HTML_Based_Content_Reader.Text_To_HTML_Based_Content", "No html head found in source file");
+                }
             }
 
             // Should the actual display text be retained?
             if (Retain_Entire_Display_Text)
             {
+                if (Tracer != null)
+                {
+                    Tracer.Add_Trace("HTML_Based_Content_Reader.Text_To_HTML_Based_Content", "Reading the entire display text and saving in the object");
+                }
+
                 int start_body = Display_Text.IndexOf("<body>");
                 int end_body = Display_Text.IndexOf("</body>");
                 if ((start_body > 0) && (end_body > start_body))

@@ -1,35 +1,27 @@
-﻿using System;
+﻿#region Using directives
+
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
+using SobekCM.Resource_Object;
+using SobekCM.Resource_Object.Bib_Info;
+using SobekCM.Resource_Object.Database;
 
-
-
-            //Actionable_Builder_Source_Folder folder = new Actionable_Builder_Source_Folder();
-            //folder.Inbound_Folder = @"\\Sob-file01\ftp\mbda\ReSend";
-
-            //string connectionString = @"data source=SOB-SQL01\SOBEK1;initial catalog=MiamiBeachDigitalArchive;integrated security=Yes;";
-
-            //SobekCM.Resource_Object.Database.SobekCM_Database.Connection_String = connectionString;
-            //SobekCM.Library.Database.SobekCM_Database.Connection_String = connectionString;
-
-
-            //Update_Non_Bib_Folders folderModule = new Update_Non_Bib_Folders();
-            //folderModule.DoWork(folder, null, null);
+#endregion
 
 namespace SobekCM.Builder_Library.Modules.Folders
 {
+    /// <summary> Folder-level builder module checks for folders that are not named in BibID or BibiD/VID format and do not have metadata.  For 
+    /// these items, creates a BibID/VID folder with minimal metadata from the folder name. </summary>
+    /// <remarks> This class implements the <see cref="abstractFolderModule" /> abstract class and implements the <see cref="iFolderModule" /> interface. </remarks>
     public class UpdateNonBibFolders : abstractFolderModule
     {
-        public UpdateNonBibFolders()
-        {
-            // TEMPORARILY
-            //Arguments.Add("MB");
-            //Arguments.Add("iMBDA");
-            //Arguments.Add("Miami Beach Digital Archive");
-        }
-
-
+        /// <summary> Check for folders that are not named in BibID or BibiD/VID format and do not have metadata.  For 
+        /// these items, creates a BibID/VID folder with minimal metadata from the folder name.  </summary>
+        /// <param name="BuilderFolder"> Builder folder upon which to perform all work </param>
+        /// <param name="IncomingPackages"> List of valid incoming packages, which may be modified by this process </param>
+        /// <param name="Deletes"> List of valid deletes, which may be modifyed by this process </param>
         public override void DoWork(Actionable_Builder_Source_Folder BuilderFolder, List<Incoming_Digital_Resource> IncomingPackages, List<Incoming_Digital_Resource> Deletes)
         {
             string[] subdirs = Directory.GetDirectories(BuilderFolder.Inbound_Folder);
@@ -73,8 +65,8 @@ namespace SobekCM.Builder_Library.Modules.Folders
                     }
 
                     // Create the new object
-                    SobekCM.Resource_Object.SobekCM_Item newItem = new Resource_Object.SobekCM_Item();
-                    newItem.Bib_Info.SobekCM_Type = Resource_Object.Bib_Info.TypeOfResource_SobekCM_Enum.Archival;
+                    SobekCM_Item newItem = new SobekCM_Item();
+                    newItem.Bib_Info.SobekCM_Type = TypeOfResource_SobekCM_Enum.Archival;
                     newItem.Bib_Info.Main_Title.Title = thisSubDirName;
                     newItem.Bib_Info.Add_Identifier(thisSubDirName);
                     newItem.Bib_Info.Source.Code = Arguments[1];
@@ -83,7 +75,7 @@ namespace SobekCM.Builder_Library.Modules.Folders
                     newItem.VID = "00001";
 
                     // Save this item, for the necessary bibid
-                    SobekCM.Resource_Object.Database.SobekCM_Database.Save_New_Digital_Resource(newItem, false, false, "Builder", "Created BibID folder from '" + thisSubDirName + "'", -1);
+                    SobekCM_Database.Save_New_Digital_Resource(newItem, false, false, "Builder", "Created BibID folder from '" + thisSubDirName + "'", -1);
 
                     string newFolderName = newItem.BibID + "_" + newItem.VID;
                     string newFolder = Path.Combine(BuilderFolder.Inbound_Folder, newFolderName);

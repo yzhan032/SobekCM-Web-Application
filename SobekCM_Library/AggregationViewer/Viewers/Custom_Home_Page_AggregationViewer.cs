@@ -1,21 +1,20 @@
-﻿using System;
+﻿#region Using directives
+
+using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-using System.Web;
-using SobekCM.Core.WebContent;
 using SobekCM.Core.Aggregations;
-using SobekCM.Core.Configuration;
 using SobekCM.Core.Navigation;
-using SobekCM.Engine_Library.Navigation;
 using SobekCM.Library.HTML;
-using SobekCM.Library.MainWriters;
 using SobekCM.Tools;
+
+#endregion
 
 namespace SobekCM.Library.AggregationViewer.Viewers
 {
+    /// <summary> Aggregation viewer displays the aggregation home page from a custom file, without putting the text
+    /// within the usual SobekCM/web skin frame </summary>
     public class Custom_Home_Page_AggregationViewer : abstractAggregationViewer
     {
 
@@ -96,7 +95,7 @@ namespace SobekCM.Library.AggregationViewer.Viewers
             {
                 StringBuilder headerBuilder = new StringBuilder();
                 StringWriter headerWriter = new StringWriter(headerBuilder);
-                HeaderFooter_Helper_HtmlSubWriter.Add_Header(headerWriter, RequestSpecificValues, "container-inner-custom", null);
+                HeaderFooter_Helper_HtmlSubWriter.Add_Header(headerWriter, RequestSpecificValues, "container-inner-custom", RequestSpecificValues.Hierarchy_Object.ShortName, null);
                 string header = headerBuilder.ToString();
                 textToDisplay = textToDisplay.Replace("<%HEADER%>", header).Replace("[%HEADER%]", header);
             }

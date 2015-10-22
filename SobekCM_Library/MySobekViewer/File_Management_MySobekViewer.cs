@@ -12,7 +12,6 @@ using System.Web.UI.WebControls;
 using SobekCM.Core.MemoryMgmt;
 using SobekCM.Core.Navigation;
 using SobekCM.Engine_Library.Email;
-using SobekCM.Engine_Library.Navigation;
 using SobekCM.Library.HTML;
 using SobekCM.Library.Settings;
 using SobekCM.Library.UI;
@@ -90,6 +89,18 @@ namespace SobekCM.Library.MySobekViewer
                     {
                         if (File.Exists(digitalResourceDirectory + "\\" + filename))
                             File.Delete(digitalResourceDirectory + "\\" + filename);
+
+                        // Special code for PDF files and their derivatives
+                        if (filename.IndexOf(".pdf", StringComparison.OrdinalIgnoreCase) > 0)
+                        {
+                            // Delete the PDF text 
+                            if (File.Exists(digitalResourceDirectory + "\\" + filename.ToLower().Replace(".pdf", "_pdf.txt")))
+                                File.Delete(digitalResourceDirectory + "\\" + filename.ToLower().Replace(".pdf", "_pdf.txt"));
+
+                            // Delete the PDF thumbnail
+                            if (File.Exists(digitalResourceDirectory + "\\" + filename.ToLower().Replace(".pdf", "thm.jpg")))
+                                File.Delete(digitalResourceDirectory + "\\" + filename.ToLower().Replace(".pdf", "thm.jpg"));
+                        }
 
                         // Forward
                         UrlWriterHelper.Redirect(RequestSpecificValues.Current_Mode);
@@ -271,7 +282,7 @@ namespace SobekCM.Library.MySobekViewer
                 try
                 {
                     SobekCM_Database.Save_Digital_Resource( Item_To_Complete, options  );
-                    SobekCM_Database.Save_Behaviors(Item_To_Complete, Item_To_Complete.Behaviors.Text_Searchable, false);
+                    SobekCM_Database.Save_Behaviors(Item_To_Complete, Item_To_Complete.Behaviors.Text_Searchable, false, false);
                 }
                 catch (Exception ee)
                 {

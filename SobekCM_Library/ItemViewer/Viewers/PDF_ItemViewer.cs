@@ -18,11 +18,12 @@ namespace SobekCM.Library.ItemViewer.Viewers
 	/// <see cref="iItemViewer" /> interface. </remarks>
 	public class PDF_ItemViewer : abstractItemViewer
 	{
-	    private bool writeAsIframe;
+	    private readonly bool writeAsIframe;
 
-		/// <summary> Constructor for a new instance of the PDF_ItemViewer class </summary>
-		/// <param name="FileName"> Name of the PDF file to display </param>
-        public PDF_ItemViewer(string FileName, Navigation_Object Current_Mode)
+	    /// <summary> Constructor for a new instance of the PDF_ItemViewer class </summary>
+	    /// <param name="FileName"> Name of the PDF file to display </param>
+	    /// <param name="Current_Mode"> Current navigation information for this request </param>
+	    public PDF_ItemViewer(string FileName, Navigation_Object Current_Mode)
 		{
             // Determine if this should be written as an iFrame
 		    writeAsIframe = ((!String.IsNullOrEmpty(Current_Mode.Browser_Type)) && (Current_Mode.Browser_Type.IndexOf("CHROME") == 0));
@@ -120,12 +121,7 @@ namespace SobekCM.Library.ItemViewer.Viewers
             Output.WriteLine("</tr></table><br />");
             //Output.WriteLine("</td></tr>");
             //Output.WriteLine("\t\t<tr><td>");
-
-			if ( !String.IsNullOrWhiteSpace(CurrentMode.Text_Search))
-			{
-				displayFileName = displayFileName + "#search=\"" + CurrentMode.Text_Search.Replace("\"", "").Replace("+", " ").Replace("-", " ") + "\"";
-			}
-
+            
 
             // Write as an iFrame, or as embed
             if (writeAsIframe)
@@ -134,8 +130,11 @@ namespace SobekCM.Library.ItemViewer.Viewers
             }
             else
             {
-                //Output.WriteLine("                  <object id=\"sbkPdf_Container\" data='" + displayFileName + "' type=\"application/pdf\" width=\"800px\"></object>");
-
+                if (!String.IsNullOrWhiteSpace(CurrentMode.Text_Search))
+                {
+                    displayFileName = displayFileName + "#search=\"" + CurrentMode.Text_Search.Replace("\"", "").Replace("+", " ").Replace("-", " ") + "\"";
+                }
+               
                 Output.WriteLine("                  <embed id=\"sbkPdf_Container\" src='" + displayFileName + "' href='" + FileName + "' style=\"width:100%;\"></embed>");
             }
 

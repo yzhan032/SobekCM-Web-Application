@@ -1,7 +1,11 @@
-﻿using System;
+﻿#region Using directives
+
+using System;
+using SobekCM.Core.BriefItem;
 using SobekCM.Resource_Object;
 using SobekCM.Resource_Object.Bib_Info;
-using SobekCM.Core.BriefItem;
+
+#endregion
 
 namespace SobekCM.Engine_Library.Items.BriefItems.Mappers
 {
@@ -40,23 +44,23 @@ namespace SobekCM.Engine_Library.Items.BriefItems.Mappers
                     // Add the relationship
                     switch (relatedItem.Relationship)
                     {
-                        case Related_Item_Type_Enum.host:
+                        case Related_Item_Type_Enum.Host:
                             relatedObj.SubTerm = "Host material";
                             break;
 
-                        case Related_Item_Type_Enum.otherFormat:
+                        case Related_Item_Type_Enum.OtherFormat:
                             relatedObj.SubTerm = "Other format";
                             break;
 
-                        case Related_Item_Type_Enum.otherVersion:
+                        case Related_Item_Type_Enum.OtherVersion:
                             relatedObj.SubTerm = "Other version";
                             break;
 
-                        case Related_Item_Type_Enum.preceding:
+                        case Related_Item_Type_Enum.Preceding:
                             relatedObj.SubTerm = "Preceded by";
                             break;
 
-                        case Related_Item_Type_Enum.succeeding:
+                        case Related_Item_Type_Enum.Succeeding:
                             relatedObj.SubTerm = "Succeeded by";
                             break;
                     }

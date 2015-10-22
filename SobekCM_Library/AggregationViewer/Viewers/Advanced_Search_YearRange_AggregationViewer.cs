@@ -3,15 +3,12 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Web;
 using System.Web.Caching;
 using SobekCM.Core.Aggregations;
 using SobekCM.Core.Configuration;
 using SobekCM.Core.Navigation;
-using SobekCM.Core.Search;
 using SobekCM.Engine_Library.Database;
-using SobekCM.Engine_Library.Navigation;
 using SobekCM.Library.HTML;
 using SobekCM.Library.MainWriters;
 using SobekCM.Library.Settings;
@@ -27,8 +24,8 @@ namespace SobekCM.Library.AggregationViewer.Viewers
 	/// Aggregation viewers are used when displaying aggregation home pages, searches, browses, and information pages.<br /><br />
 	/// During a valid html request to display the advanced search page, the following steps occur:
 	/// <ul>
-	/// <li>Application state is built/verified by the <see cref="Application_State.Application_State_Builder"/> </li>
-	/// <li>Request is analyzed by the <see cref="Navigation.SobekCM_QueryString_Analyzer"/> and output as a <see cref="Navigation_Object"/> </li>
+	/// <li>Application state is built/verified by the Application_State_Builder </li>
+	/// <li>Request is analyzed by the QueryString_Analyzer and output as a <see cref="Navigation_Object"/> </li>
 	/// <li>Main writer is created for rendering the output, in this case the <see cref="Html_MainWriter"/> </li>
 	/// <li>The HTML writer will create the necessary subwriter.  For a collection-level request, an instance of the  <see cref="Aggregation_HtmlSubwriter"/> class is created. </li>
 	/// <li>To display the requested collection view, the collection subwriter will creates an instance of this class </li>
@@ -218,7 +215,7 @@ namespace SobekCM.Library.AggregationViewer.Viewers
 
 			Output.WriteLine("  <table id=\"sbkAsav_SearchPanel\" >");
 			Output.WriteLine("    <tr>");
-			Output.WriteLine("      <td style=\"width:28%;text-align:right;\"><label for=\"Textbox1\">" + searchLanguage + "</label></td>");
+            Output.WriteLine("      <td style=\"width:28%;text-align:right;\"><label for=\"Textbox1\" id=\"sbkAsav_SearchPrompt\" >" + searchLanguage + "</label></td>");
 			Output.WriteLine("      <td style=\"width:3%;\">&nbsp;</td>");
 			Output.WriteLine("      <td style=\"width:58%;\">");
 			Output.WriteLine("        <input name=\"Textbox1\" type=\"text\" id=\"Textbox1\" class=\"sbkAsav_SearchBox sbk_Focusable\" value=\"" + text1 + "\" />");
@@ -374,10 +371,10 @@ namespace SobekCM.Library.AggregationViewer.Viewers
 
 			Output.WriteLine("    <tr>");
 			Output.WriteLine("      <td colspan=\"2\" class=\"sbkAsav_SearchOptions\">" + searchOptions + "</span></td>");
-			Output.WriteLine("      <td style=\"vertical-align:middle;text-align:left;\"> &nbsp; &nbsp; <a href=\"" + RequestSpecificValues.Current_Mode.Base_URL + "help\" target=\"SEARCHHELP\" ><img src=\"" + RequestSpecificValues.Current_Mode.Base_URL + "design/skins/" + RequestSpecificValues.Current_Mode.Base_Skin_Or_Skin + "/buttons/help_button.jpg\" alt=\"HELP\" /></a></td>");
+			Output.WriteLine("      <td style=\"vertical-align:middle;text-align:left;\" id=\"sbkAsav_SearchHelp\"> &nbsp; &nbsp; <a href=\"" + RequestSpecificValues.Current_Mode.Base_URL + "help\" target=\"SEARCHHELP\" ><img src=\"" + RequestSpecificValues.Current_Mode.Base_URL + "design/skins/" + RequestSpecificValues.Current_Mode.Base_Skin_Or_Skin + "/buttons/help_button.jpg\" alt=\"HELP\" /></a></td>");
 			Output.WriteLine("      <td colspan=\"2\">&nbsp;</td>");
 			Output.WriteLine("    </tr>");
-			Output.WriteLine("    <tr>");
+			Output.WriteLine("    <tr id=\"sbkAsav_SearchPrecision\">");
 			Output.WriteLine("      <td colspan=\"5\">");
 			Output.WriteLine("        <table>");
 			Output.WriteLine("           <tr style=\"text-align:left;vertical-align:top;\">");

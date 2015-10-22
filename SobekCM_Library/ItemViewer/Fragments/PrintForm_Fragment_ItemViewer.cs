@@ -19,6 +19,9 @@ namespace SobekCM.Library.ItemViewer.Fragments
         private Page_TreeNode currentPage;
         private abstractItemViewer pageViewer;
 
+        /// <summary> Constructor for a new instance of the <see cref="PrintForm_Fragment_ItemViewer"/> class </summary>
+        /// <param name="Current_Page"> Current page object </param>
+        /// <param name="PageViewer"> Current page/item viewer </param>
         public PrintForm_Fragment_ItemViewer( Page_TreeNode Current_Page, abstractItemViewer PageViewer )
         {
             currentPage = Current_Page;
@@ -33,6 +36,9 @@ namespace SobekCM.Library.ItemViewer.Fragments
             get { return ItemViewer_Type_Enum.Fragment_PrintForm; }
         }
 
+        /// <summary> Adds the main view section to the page turner </summary>
+        /// <param name="MainPlaceHolder">Main place holder ( "mainPlaceHolder" ) in the itemNavForm form into which the bulk of the item viewer's output is displayed</param>
+        /// <param name="Tracer">Trace object keeps a list of each method executed and important milestones in rendering</param>
         public override void Add_Main_Viewer_Section(PlaceHolder MainPlaceHolder, Custom_Tracer Tracer)
         {
 
@@ -82,44 +88,7 @@ namespace SobekCM.Library.ItemViewer.Fragments
                         }
                     }
 
-                    if ((pageViewer != null) && (pageViewer.ItemViewer_Type == ItemViewer_Type_Enum.JPEG2000))
-                    {
-                        int currViewportZoom = CurrentMode.Viewport_Zoom.HasValue ? CurrentMode.Viewport_Zoom.Value : 1;
-                        int adjustedZoom = currViewportZoom - 1;
-                        if (adjustedZoom > 0)
-                        {
-                            if ((CurrentMode.Viewport_Size > 0) || (adjustedZoom > 0) || (CurrentMode.Viewport_Rotation > 0))
-                            {
-                                if (CurrentMode.Viewport_Rotation > 0)
-                                {
-                                    print_options = "&vo=" + CurrentMode.Viewport_Size.ToString() + adjustedZoom.ToString() + CurrentMode.Viewport_Rotation;
-                                }
-                                else
-                                {
-                                    if (adjustedZoom > 0)
-                                    {
-                                        print_options = "&vo=" + CurrentMode.Viewport_Size.ToString() + adjustedZoom.ToString();
-                                    }
-                                    else
-                                    {
-                                        print_options = "&vo=" + CurrentMode.Viewport_Size.ToString();
-                                    }
-                                }
-                            }
-
-                            // Only add the point if it is not 0,0
-                            if ((CurrentMode.Viewport_Point_X > 0) || (CurrentMode.Viewport_Point_Y > 0))
-                                print_options = print_options + "&vp=" + CurrentMode.Viewport_Point_X + "," + CurrentMode.Viewport_Point_Y;
-
-                            responseBuilder.AppendLine("    <input type=\"radio\" name=\"print_pages\" value=\"current_view\" id=\"current_view\" class=\"print_radiobutton\" checked=\"checked\" /> <label for=\"current_view\">Print current view</label><br />");
-                            responseBuilder.AppendLine("    <input type=\"radio\" name=\"print_pages\" value=\"current_page\" id=\"current_page\" class=\"print_radiobutton\" /> <label for=\"current_page\">Print current page</label><br />");
-                        }
-                        else
-                        {
-                            responseBuilder.AppendLine("    <input type=\"radio\" name=\"print_pages\" value=\"current_page\" id=\"current_page\" class=\"print_radiobutton\" checked=\"checked\" /> <label for=\"current_page\">Print current page</label><br />");
-                        }
-                        something_selected = true;
-                    }
+                   
 
                     if ((pageViewer != null) && (pageViewer.ItemViewer_Type == ItemViewer_Type_Enum.JPEG))
                     {
@@ -176,8 +145,8 @@ namespace SobekCM.Library.ItemViewer.Fragments
                 responseBuilder.AppendLine("    </blockquote>");
                 responseBuilder.AppendLine("  </fieldset><br />");
 				responseBuilder.AppendLine("  <div style=\"text-align:center; font-size:1.3em;\">");
-				responseBuilder.AppendLine("    <button title=\"Send\" class=\"roundbutton\" onclick=\"return print_form_close();\"> CANCEL </button> &nbsp; &nbsp; ");
-				responseBuilder.AppendLine("    <button title=\"Send\" class=\"roundbutton\" onclick=\"return print_item('" + CurrentMode.Page + "','" + url_redirect + "','" + print_options + "');\"> PRINT </button>");
+				responseBuilder.AppendLine("    <button title=\"Send\" class=\"roundbutton\" onclick=\"return print_form_close();return false;\"> CANCEL </button> &nbsp; &nbsp; ");
+                responseBuilder.AppendLine("    <button title=\"Send\" class=\"roundbutton\" onclick=\"return print_item('" + CurrentMode.Page + "','" + url_redirect + "','" + print_options + "');return false;\"> PRINT </button>");
 				responseBuilder.AppendLine("  </div><br />");
                 responseBuilder.AppendLine("</div>");
                 responseBuilder.AppendLine();

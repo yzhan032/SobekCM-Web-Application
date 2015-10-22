@@ -9,14 +9,17 @@ using SobekCM.Core.Configuration;
 
 namespace SobekCM.Core.Navigation
 {
+    /// <summary> Class is used to write the standard SobekCM URL from the navigation object  </summary>
     public static class UrlWriterHelper
     {
+        /// <summary> URL to send to if there is an unhandled error durig the URL construction </summary>
         public static string Unhandled_Error_URL { get; set;  }
 
         #region iSobekCM_Navigation_Object Members
 
         /// <summary> Returns the URL to redirect the user's browser, based on the current
         /// mode and specifics for this mode. </summary>
+        /// <param name="Current_Mode"> Current navigation object which inludes all the navigation necessary objects </param>
         /// <param name="Item_View_Code">Item view code to display</param>
         /// <param name="Include_URL_Opts"> Flag indicates whether to include URL opts or not </param>
         /// <returns> String to be attached to the end of the main application name to redirect
@@ -169,23 +172,23 @@ namespace SobekCM.Core.Navigation
                     string simple_html_cms_url = this_base_url + Current_Mode.Info_Browse_Mode + urlOptions1;
                     switch (Current_Mode.WebContent_Type)
                     {
+                        case WebContent_Type_Enum.Delete_Verify:
+                            return (simple_html_cms_url.IndexOf("?") > 0) ? simple_html_cms_url + "&mode=verify" : simple_html_cms_url + "?mode=verify";
+
                         case WebContent_Type_Enum.Edit:
-                            if (simple_html_cms_url.IndexOf("?") > 0)
-                                return simple_html_cms_url + "&mode=edit";
-                            else
-                                return simple_html_cms_url + "?mode=edit";
+                            return (simple_html_cms_url.IndexOf("?") > 0) ? simple_html_cms_url + "&mode=edit" : simple_html_cms_url + "?mode=edit";
+
+                        case WebContent_Type_Enum.Manage_Menu:
+                            return (simple_html_cms_url.IndexOf("?") > 0) ? simple_html_cms_url + "&mode=menu" : simple_html_cms_url + "?mode=menu";
 
                         case WebContent_Type_Enum.Milestones:
-                            if (simple_html_cms_url.IndexOf("?") > 0)
-                                return simple_html_cms_url + "&mode=miletsones";
-                            else
-                                return simple_html_cms_url + "?mode=miletsones";
+                            return (simple_html_cms_url.IndexOf("?") > 0) ? simple_html_cms_url + "&mode=miletsones" : simple_html_cms_url + "?mode=milestones";
 
                         case WebContent_Type_Enum.Permissions:
-                            if (simple_html_cms_url.IndexOf("?") > 0)
-                                return simple_html_cms_url + "&mode=permissions";
-                            else
-                                return simple_html_cms_url + "?mode=permissions";
+                            return (simple_html_cms_url.IndexOf("?") > 0) ? simple_html_cms_url + "&mode=permissions" : simple_html_cms_url + "?mode=permissions";
+
+                        case WebContent_Type_Enum.Usage:
+                            return (simple_html_cms_url.IndexOf("?") > 0) ? simple_html_cms_url + "&mode=usage" : simple_html_cms_url + "?mode=usage";
 
                         default:
                             return simple_html_cms_url;
@@ -196,7 +199,9 @@ namespace SobekCM.Core.Navigation
                     {
                         case My_Sobek_Type_Enum.Logon:
                             if (!String.IsNullOrEmpty(Current_Mode.Return_URL))
+                            {
                                 return this_base_url + "my/logon?return=" + HttpUtility.UrlEncode(Current_Mode.Return_URL).Replace("%2c", ",") + urlOptions2;
+                            }
                             return this_base_url + "my/logon" + urlOptions1;
 
                         case My_Sobek_Type_Enum.Home:
@@ -442,6 +447,29 @@ namespace SobekCM.Core.Navigation
                                 return this_base_url + "admin/permissions/" + Current_Mode.My_Sobek_SubMode + urlOptions1;
                             return this_base_url + "admin/permissions" + urlOptions1;
 
+                        case Admin_Type_Enum.WebContent_Add_New:
+                            return this_base_url + "admin/webadd" + urlOptions1;
+
+                        case Admin_Type_Enum.WebContent_History:
+                            return this_base_url + "admin/webhistory" + urlOptions1;
+
+                        case Admin_Type_Enum.WebContent_Mgmt:
+                            if (!String.IsNullOrEmpty(Current_Mode.My_Sobek_SubMode))
+                                return this_base_url + "admin/webcontent/" + Current_Mode.My_Sobek_SubMode + urlOptions1;
+                            return this_base_url + "admin/webcontent" + urlOptions1;
+
+                        case Admin_Type_Enum.WebContent_Single:
+                            if ((Current_Mode.WebContentID.HasValue) && (Current_Mode.WebContentID > 0))
+                            {
+                                if (!String.IsNullOrEmpty(Current_Mode.My_Sobek_SubMode))
+                                    return this_base_url + "admin/websingle/" + Current_Mode.WebContentID + "/" + Current_Mode.My_Sobek_SubMode + urlOptions1;
+                                return this_base_url + "admin/websingle/" + Current_Mode.WebContentID + urlOptions1;
+                            }
+                            return this_base_url + "admin/webcontent" + urlOptions1;
+
+                        case Admin_Type_Enum.WebContent_Usage:
+                            return this_base_url + "admin/webusage" + urlOptions1;
+
                         case Admin_Type_Enum.Wordmarks:
                             return this_base_url + "admin/wordmarks" + urlOptions1;
 
@@ -465,6 +493,8 @@ namespace SobekCM.Core.Navigation
                             if (!String.IsNullOrEmpty(Current_Mode.My_Sobek_SubMode))
                                 return this_base_url + "admin/editskin/" + Current_Mode.My_Sobek_SubMode.Replace("|", "/") + urlOptions1;
                             return this_base_url + "admin/webskins" + urlOptions1;
+
+
 
                         default:
                             return this_base_url + "admin" + urlOptions1;
@@ -554,8 +584,7 @@ namespace SobekCM.Core.Navigation
                         bool query_string_started = false;
 
                         // Check for any query string to be included 
-                        if (((String.IsNullOrEmpty(Item_View_Code)) && (!String.IsNullOrEmpty(Current_Mode.Page_By_FileName))) || (!String.IsNullOrEmpty(Current_Mode.Text_Search)) || (!String.IsNullOrEmpty(Current_Mode.Coordinates)) ||
-                            (((!String.IsNullOrEmpty(Current_Mode.ViewerCode)) && (Current_Mode.ViewerCode.IndexOf("x") >= 0)) && ((Current_Mode.Viewport_Point_X > 0) || (Current_Mode.Viewport_Point_Y > 0) || (Current_Mode.Viewport_Size != 1) || ((Current_Mode.Viewport_Zoom - 1) > 0) || (Current_Mode.Viewport_Rotation > 0))))
+                        if (((String.IsNullOrEmpty(Item_View_Code)) && (!String.IsNullOrEmpty(Current_Mode.Page_By_FileName))) || (!String.IsNullOrEmpty(Current_Mode.Text_Search)) || (!String.IsNullOrEmpty(Current_Mode.Coordinates)))
                         {
                             // Add either the text search or text display, if they exist
                             if (!String.IsNullOrEmpty(Current_Mode.Text_Search))
@@ -575,70 +604,6 @@ namespace SobekCM.Core.Navigation
                                 else
                                 {
                                     itemDisplayBuilder.Append("&coord=" + Current_Mode.Coordinates);
-                                }
-                            }
-
-
-                            // Add any viewport option information if this is a ZOOMABLE view
-                            if (( !String.IsNullOrEmpty(Current_Mode.ViewerCode)) && ( Current_Mode.ViewerCode.IndexOf("x") >= 0))
-                            {
-                                int currZoom = Current_Mode.Viewport_Zoom.HasValue ? Current_Mode.Viewport_Zoom.Value : 1;
-                                int adjustedZoom = currZoom - 1;
-                                if ((Current_Mode.Viewport_Size != 1) || (adjustedZoom > 0) || (Current_Mode.Viewport_Rotation > 0))
-                                {
-                                    if (Current_Mode.Viewport_Rotation > 0)
-                                    {
-                                        if (!query_string_started)
-                                        {
-                                            itemDisplayBuilder.Append("?vo=" + Current_Mode.Viewport_Size + adjustedZoom + Current_Mode.Viewport_Rotation);
-                                            query_string_started = true;
-                                        }
-                                        else
-                                        {
-                                            itemDisplayBuilder.Append("&vo=" + Current_Mode.Viewport_Size + adjustedZoom + Current_Mode.Viewport_Rotation);
-                                        }
-                                    }
-                                    else
-                                    {
-                                        if (adjustedZoom > 0)
-                                        {
-                                            if (!query_string_started)
-                                            {
-                                                itemDisplayBuilder.Append("?vo=" + Current_Mode.Viewport_Size + adjustedZoom);
-                                                query_string_started = true;
-                                            }
-                                            else
-                                            {
-                                                itemDisplayBuilder.Append("&vo=" + Current_Mode.Viewport_Size + adjustedZoom);
-                                            }
-                                        }
-                                        else
-                                        {
-                                            if (!query_string_started)
-                                            {
-                                                itemDisplayBuilder.Append("?vo=" + Current_Mode.Viewport_Size);
-                                                query_string_started = true;
-                                            }
-                                            else
-                                            {
-                                                itemDisplayBuilder.Append("&vo=" + Current_Mode.Viewport_Size);
-                                            }
-                                        }
-                                    }
-                                }
-
-                                // Only add the point if it is not 0,0
-                                if ((Current_Mode.Viewport_Point_X > 0) || (Current_Mode.Viewport_Point_Y > 0))
-                                {
-                                    if (!query_string_started)
-                                    {
-                                        itemDisplayBuilder.Append("?vp=" + Current_Mode.Viewport_Point_X + "," + Current_Mode.Viewport_Point_Y);
-                                        query_string_started = true;
-                                    }
-                                    else
-                                    {
-                                        itemDisplayBuilder.Append("&vp=" + Current_Mode.Viewport_Point_X + "," + Current_Mode.Viewport_Point_Y);
-                                    }
                                 }
                             }
                         }
@@ -1022,21 +987,21 @@ namespace SobekCM.Core.Navigation
                             {
                                 if (!String.IsNullOrEmpty(adjusted_aggregation))
                                 {
-                                    if (Current_Mode.Sort == 0)
+                                    if ((!Current_Mode.Sort.HasValue) || (Current_Mode.Sort == 0))
                                         return this_base_url + adjusted_aggregation + "/inprocess/" + Current_Mode.Page + urlOptions1;
                                     return this_base_url + adjusted_aggregation + "/inprocess/" + Current_Mode.Page + "?o=" + Current_Mode.Sort + urlOptions2;
                                 }
-                                if (Current_Mode.Sort == 0)
+                                if ((!Current_Mode.Sort.HasValue) || (Current_Mode.Sort == 0))
                                     return this_base_url + "inprocess/" + Current_Mode.Page + urlOptions1;
                                 return this_base_url + "inprocess/" + Current_Mode.Page + "?o=" + Current_Mode.Sort + urlOptions2;
                             }
                             if (!String.IsNullOrEmpty(adjusted_aggregation))
                             {
-                                if (Current_Mode.Sort == 0)
+                                if ((!Current_Mode.Sort.HasValue) || (Current_Mode.Sort == 0))
                                     return this_base_url + adjusted_aggregation + "/inprocess" + urlOptions1;
                                 return this_base_url + adjusted_aggregation + "/inprocess?o=" + Current_Mode.Sort + urlOptions2;
                             }
-                            if (Current_Mode.Sort == 0)
+                            if ((!Current_Mode.Sort.HasValue) || (Current_Mode.Sort == 0))
                                 return this_base_url + "inprocess" + urlOptions1;
                             return this_base_url + "inprocess?o=" + Current_Mode.Sort + urlOptions2;
 
@@ -1234,6 +1199,7 @@ namespace SobekCM.Core.Navigation
 
         /// <summary> Returns the URL to redirect the user's browser, based on the current
         /// mode and specifics for this mode. </summary>
+        /// <param name="Current_Mode"> Current navigation object which contains the information </param>
         /// <param name="Include_URL_Opts"> Flag indicates whether to include URL opts or not </param>
         /// <returns> String to be attached to the end of the main application name to redirect
         /// the current user's browser.  </returns>
@@ -1244,6 +1210,7 @@ namespace SobekCM.Core.Navigation
 
         /// <summary> Returns the URL to redirect the user's browser, based on the current
         /// mode and specifics for this mode. </summary>
+        /// <param name="Current_Mode"> Current navigation object which contains the information </param>
         /// <param name="Item_View_Code">Item view code to display</param>
         /// <returns> String to be attached to the end of the main application name to redirect
         /// the current user's browser.  </returns>
@@ -1266,7 +1233,8 @@ namespace SobekCM.Core.Navigation
         }
 
         /// <summary> Redirect the user to the current mode's URL </summary>
-        /// <param name="Flush_Response">Flag indicates if the response should be flushed</param>
+        /// <param name="Current_Mode"> Current navigation object which contains the information  </param>
+        /// <param name="Flush_Response"> Flag indicates if the response should be flushed</param>
         /// <remarks> This does not stop execution immediately (which would raise a ThreadAbortedException
         /// and be costly in terms of performance) but it does set the 
         /// Request_Completed flag, which should be checked and will effectively stop any 

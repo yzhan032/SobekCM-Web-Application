@@ -75,27 +75,11 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="AjaxControlToolkit">
-      <HintPath>..\SobekCM\Bin\AjaxControlToolkit.dll</HintPath>
-    </Reference>
     <Reference Include="GemBox.Spreadsheet, Version=33.3.30.1049, Culture=neutral, PublicKeyToken=b1b72c69714d4847, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\DLLs\GemBox.Spreadsheet.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.ApplicationBlocks.Data, Version=2.0.0.0, Culture=neutral">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\DLLs\Microsoft.ApplicationBlocks.Data.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.Practices.ServiceLocation">
-      <HintPath>..\DLLs\SolrNet\Microsoft.Practices.ServiceLocation.dll</HintPath>
-    </Reference>
-    <Reference Include="SolrNet, Version=0.3.0.0, Culture=neutral, PublicKeyToken=bc21753e8aa334cb, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\DLLs\SolrNet\SolrNet.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="System" />
-    <Reference Include="System.configuration" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
@@ -103,7 +87,6 @@
     <Reference Include="System.Drawing" />
     <Reference Include="System.Web" />
     <Reference Include="System.Web.Extensions" />
-    <Reference Include="System.Web.Services" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
     <Reference Include="Zen.Barcode.Core">
@@ -116,6 +99,12 @@
     <Compile Include="AdminViewer\iMySobek_Admin_Viewer.cs" />
     <Compile Include="AdminViewer\Permissions_Reports_AdminViewer.cs" />
     <Compile Include="AdminViewer\Skin_Single_AdminViewer.cs" />
+    <Compile Include="AdminViewer\WebContent_Add_New_AdminViewer.cs" />
+    <Compile Include="AdminViewer\WebContent_Mgmt_AdminViewer.cs" />
+    <Compile Include="AdminViewer\WebContent_History_AdminViewer.cs" />
+    <Compile Include="AdminViewer\WebContent_Single_AdminViewer.cs" />
+    <Compile Include="AdminViewer\WebContent_Usage_AdminViewer.cs" />
+    <Compile Include="AggregationViewer\Viewers\Basic_Text_Search_Combined_AggregationViewer.cs" />
     <Compile Include="AggregationViewer\Viewers\Manage_Menu_AggregationViewer.cs" />
     <Compile Include="AggregationViewer\Viewers\Advanced_Search_MimeType_AggregationViewer.cs" />
     <Compile Include="AggregationViewer\Viewers\Basic_Search_MimeType_AggregationViewer.cs" />
@@ -206,9 +195,6 @@
     <Compile Include="ItemViewer\Fragments\Share_Fragment_ItemViewer.cs">
       <SubType>ASPXCodeBehind</SubType>
     </Compile>
-    <Compile Include="ItemViewer\Viewers\Aware_JP2_ItemViewer.cs">
-      <SubType>ASPXCodeBehind</SubType>
-    </Compile>
     <Compile Include="ItemViewer\Viewers\Dataset_CodeBook_ItemViewer.cs">
       <SubType>ASPXCodeBehind</SubType>
     </Compile>
@@ -245,6 +231,9 @@
     </Compile>
     <Compile Include="AdminViewer\Aggregation_Single_AdminViewer.cs" />
     <Compile Include="ItemViewer\Viewers\TrackingSheet_ItemViewer.cs">
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="ItemViewer\Viewers\Video_ItemViewer.cs">
       <SubType>ASPXCodeBehind</SubType>
     </Compile>
     <Compile Include="Localization\baseLocalizationInfo.cs" />
@@ -608,8 +597,20 @@
     <Compile Include="Text_Search_Term_Highlighter.cs" />
     <Compile Include="Email\URL_Email_Helper.cs" />
     <Compile Include="Email\Usage_Stats_Email_Helper.cs" />
+    <Compile Include="WebContentViewer\Viewers\abstractWebContentViewer.cs" />
+    <Compile Include="WebContentViewer\Viewers\Delete_Verify_WebContentViewer.cs" />
+    <Compile Include="WebContentViewer\Viewers\Manage_Menu_WebContentViewer.cs" />
+    <Compile Include="WebContentViewer\Viewers\iWebContentViewer.cs" />
+    <Compile Include="WebContentViewer\Viewers\Usage_Statistics_WebContentViewer.cs" />
+    <Compile Include="WebContentViewer\Viewers\User_Permissions_WebContentViewer.cs" />
+    <Compile Include="WebContentViewer\Viewers\Work_History_WebContentViewer.cs" />
+    <Compile Include="WebContentViewer\WebContentViewer_Factory.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\EngineAgnosticLayerDbAccess\EngineAgnosticLayerDbAccess.csproj">
+      <Project>{b481ce6e-05fd-4336-9524-64d057aab107}</Project>
+      <Name>EngineAgnosticLayerDbAccess</Name>
+    </ProjectReference>
     <ProjectReference Include="..\SobekCM_Core\SobekCM_Core.csproj">
       <Project>{849c78a5-c60b-4faf-9efb-943753f64e56}</Project>
       <Name>SobekCM_Core</Name>

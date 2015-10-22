@@ -4,7 +4,6 @@ using System;
 using SobekCM.Core.Aggregations;
 using SobekCM.Core.ApplicationState;
 using SobekCM.Core.Navigation;
-using SobekCM.Engine_Library.Navigation;
 using SobekCM.Library.HTML;
 
 #endregion
@@ -39,6 +38,9 @@ namespace SobekCM.Library.AggregationViewer
 					return SearchType2 == Search_Type_Enum.Basic;
 
                 case Item_Aggregation_Views_Searches_Enum.Basic_Search_MimeType:
+                    return SearchType2 == Search_Type_Enum.Basic;
+
+                case Item_Aggregation_Views_Searches_Enum.Basic_Search_FullTextOption:
                     return SearchType2 == Search_Type_Enum.Basic;
 
                 case Item_Aggregation_Views_Searches_Enum.FullText_Search:

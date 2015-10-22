@@ -14,7 +14,6 @@ using SobekCM.Engine_Library.Database;
 using SobekCM.Library;
 using SobekCM.Resource_Object.Database;
 using SobekCM.Tools.Logs;
-using SobekCM.Builder_Library;
 
 #endregion
 
@@ -31,11 +30,11 @@ namespace SobekCM.Builder_Library
         private readonly bool verbose;
 
         private readonly List<Database_Instance_Configuration> instances;
-        private List<Worker_BulkLoader> loaders;
         private readonly string logFileDirectory;
 
         /// <summary> Constructor for a new instance of the Worker_Controller class </summary>
         /// <param name="Verbose"> Flag indicates if this should be verbose in the log file and console </param>
+        /// <param name="LogFileDirectory"> Directory for the log files </param>
         public Worker_Controller( bool Verbose, string LogFileDirectory )
         {
             verbose = Verbose;
@@ -92,7 +91,7 @@ namespace SobekCM.Builder_Library
                 if (!String.IsNullOrEmpty(possible_ghost))
                 {
                     string gsPath = Path.GetDirectoryName(possible_ghost);
-                    if ((Directory.Exists(gsPath)) && ((File.Exists(Path.Combine(gsPath, "gswin32c.exe"))) || (File.Exists(Path.Combine(gsPath, "gswin64c.exe")))))
+                    if ((!String.IsNullOrEmpty(gsPath)) && (Directory.Exists(gsPath)) && ((File.Exists(Path.Combine(gsPath, "gswin32c.exe"))) || (File.Exists(Path.Combine(gsPath, "gswin64c.exe")))))
                     {
                         if (File.Exists(Path.Combine(gsPath, "gswin64c.exe")))
                             MultiInstance_Builder_Settings.Ghostscript_Executable = Path.Combine(gsPath, "gswin64c.exe");
@@ -127,7 +126,7 @@ namespace SobekCM.Builder_Library
             }
 
             // Create the new log file
-            LogFileXHTML preloader_logger = new LogFileXHTML(local_log_name, "SobekCM Incoming Packages Log", "UFDC_Builder.exe", true);
+            LogFileXhtml preloader_logger = new LogFileXhtml(local_log_name, "SobekCM Incoming Packages Log", "UFDC_Builder.exe", true);
 
             // start with warnings on imagemagick and ghostscript not being installed
             if ((String.IsNullOrEmpty(MultiInstance_Builder_Settings.ImageMagick_Executable)) || (!File.Exists(MultiInstance_Builder_Settings.ImageMagick_Executable)))
@@ -156,7 +155,7 @@ namespace SobekCM.Builder_Library
 	        {
 		        if ((!aborted) && (dbConfig.Is_Active) && (dbConfig.Can_Abort))
 		        {
-			        Resource_Object.Database.SobekCM_Database.Connection_String = dbConfig.Connection_String;
+			        SobekCM_Database.Connection_String = dbConfig.Connection_String;
 			        Library.Database.SobekCM_Database.Connection_String = dbConfig.Connection_String;
 
 			        // Check that this should not be skipped or aborted
@@ -269,10 +268,8 @@ namespace SobekCM.Builder_Library
             do
             {
 				// Is it time to build any RSS/XML feeds?
-	            bool rebuildRssFeeds = false;
 				if (DateTime.Compare(DateTime.Now, feedNextBuildTime) >= 0)
 				{
-					rebuildRssFeeds = true;
 					feedNextBuildTime = DateTime.Now.Add(new TimeSpan(0, 10, 0));
 				}
 
@@ -390,7 +387,7 @@ namespace SobekCM.Builder_Library
 				        Database_Instance_Configuration dbInstance = instances[i];
 
 				        // Set the database flag
-				        Resource_Object.Database.SobekCM_Database.Connection_String = dbInstance.Connection_String;
+				        SobekCM_Database.Connection_String = dbInstance.Connection_String;
 			            Library.Database.SobekCM_Database.Connection_String = dbInstance.Connection_String;
 
 				        // Pull the abort/pause flag
@@ -417,7 +414,7 @@ namespace SobekCM.Builder_Library
 					{
 						Console.WriteLine("Setting abort flag message in " + dbConfig.Name);
 						preloader_logger.AddNonError("Setting abort flag message in " + dbConfig.Name);
-						Resource_Object.Database.SobekCM_Database.Connection_String = dbConfig.Connection_String;
+						SobekCM_Database.Connection_String = dbConfig.Connection_String;
 						Library.Database.SobekCM_Database.Connection_String = dbConfig.Connection_String;
 						Library.Database.SobekCM_Database.Builder_Add_Log_Entry(-1, String.Empty, "Standard", "Building ABORTED per request from database key", String.Empty);
 
@@ -491,7 +488,7 @@ namespace SobekCM.Builder_Library
 
                 return returnValue;
             }
-            catch ( Exception ee)
+            catch ( Exception )
             {
                 return false;
             }
@@ -511,7 +508,7 @@ namespace SobekCM.Builder_Library
             string local_log_name = Engine_ApplicationCache_Gateway.Settings.Local_Log_Directory + "\\" + log_name;
 
             // Create the new log file
-            LogFileXHTML preloader_logger = new LogFileXHTML(local_log_name, "SobekCM Incoming Packages Log", "UFDC_Builder.exe", true);
+            LogFileXhtml preloader_logger = new LogFileXhtml(local_log_name, "SobekCM Incoming Packages Log", "UFDC_Builder.exe", true);
 
 			// Step through each database instance
 	        foreach (Database_Instance_Configuration dbConfig in Engine_ApplicationCache_Gateway.Settings.Database_Connections)
@@ -525,8 +522,8 @@ namespace SobekCM.Builder_Library
 			        }
 			        else
 			        {
-				        SobekCM.Resource_Object.Database.SobekCM_Database.Connection_String = dbConfig.Connection_String;
-			            SobekCM.Library.Database.SobekCM_Database.Connection_String = dbConfig.Connection_String;
+				        SobekCM_Database.Connection_String = dbConfig.Connection_String;
+			            Library.Database.SobekCM_Database.Connection_String = dbConfig.Connection_String;
                         Worker_BulkLoader newLoader = new Worker_BulkLoader(preloader_logger, verbose, dbConfig, (instances.Count > 1), logFileDirectory);
 						newLoader.Perform_BulkLoader(Verbose);
 
@@ -568,7 +565,7 @@ namespace SobekCM.Builder_Library
             if (CompleteStaticRebuild)
             {
 				Console.WriteLine("Beginning static rebuild");
-                LogFileXHTML staticRebuildLog = new LogFileXHTML( logFileDirectory  + "\\static_rebuild.html");
+                LogFileXhtml staticRebuildLog = new LogFileXhtml( logFileDirectory  + "\\static_rebuild.html");
 				Static_Pages_Builder builder = new Static_Pages_Builder(Engine_ApplicationCache_Gateway.Settings.Application_Server_URL, Engine_ApplicationCache_Gateway.Settings.Static_Pages_Location, Engine_ApplicationCache_Gateway.Settings.Application_Server_Network);
                 builder.Rebuild_All_Static_Pages(staticRebuildLog, true, Engine_ApplicationCache_Gateway.Settings.Local_Log_Directory, String.Empty, -1);
             }

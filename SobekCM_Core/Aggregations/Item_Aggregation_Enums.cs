@@ -1,4 +1,8 @@
-﻿using System;
+﻿#region Using directives
+
+using System;
+
+#endregion
 
 namespace SobekCM.Core.Aggregations
 {
@@ -31,6 +35,9 @@ namespace SobekCM.Core.Aggregations
 
         /// <summary> Basic search type allows metadata searching with one search field </summary>
         Basic_Search,
+
+        /// <summary> Basic search type that includes an option for the user to include full text search in their results </summary>
+        Basic_Search_FullTextOption,
 
         /// <summary> Basic search type allows metadata searching with one search field but also ability to 
         /// select items that have SOME mimetype ( i.e., some digital resources )</summary>

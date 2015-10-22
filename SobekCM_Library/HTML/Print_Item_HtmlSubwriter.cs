@@ -4,6 +4,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Web;
+using SobekCM.Engine_Library.ApplicationState;
+using SobekCM.Library.ItemViewer.Viewers;
 using SobekCM.Library.Settings;
 using SobekCM.Library.UI;
 using SobekCM.Resource_Object.Divisions;
@@ -17,11 +20,39 @@ namespace SobekCM.Library.HTML
     /// <remarks> This class extends the <see cref="abstractHtmlSubwriter"/> abstract class. </remarks>
     public class Print_Item_HtmlSubwriter : abstractHtmlSubwriter
     {
+        private bool isRestricted;
+        private string restriction_message;
+
         /// <summary> Constructor for a new instancee of the Print_Item_HtmlSubwriter class </summary>
         /// <param name="RequestSpecificValues"> All the necessary, non-global data specific to the current request </param>
         public Print_Item_HtmlSubwriter(RequestCache RequestSpecificValues) : base(RequestSpecificValues) 
         {
-            // Do nothing
+            // Check for IP restriction
+            restriction_message = String.Empty;
+            if (RequestSpecificValues.Current_Item.Behaviors.IP_Restriction_Membership > 0)
+            {
+                if (HttpContext.Current != null)
+                {
+                    int user_mask = (int)HttpContext.Current.Session["IP_Range_Membership"];
+                    int comparison = RequestSpecificValues.Current_Item.Behaviors.IP_Restriction_Membership & user_mask;
+                    if (comparison == 0)
+                    {
+                        int restriction = RequestSpecificValues.Current_Item.Behaviors.IP_Restriction_Membership;
+                        int restriction_counter = 1;
+                        while (restriction % 2 != 1)
+                        {
+                            restriction = restriction >> 1;
+                            restriction_counter++;
+                        }
+                        if (UI_ApplicationCache_Gateway.IP_Restrictions[restriction_counter] != null)
+                            restriction_message = UI_ApplicationCache_Gateway.IP_Restrictions[restriction_counter].Item_Restricted_Statement;
+                        else
+                            restriction_message = "Restricted Item";
+                    }
+                }
+            }
+
+            isRestricted = restriction_message.Length > 0;
         }
 
         /// <summary> Writes the HTML generated to print this item directly to the response stream </summary>
@@ -30,6 +61,13 @@ namespace SobekCM.Library.HTML
         /// <returns> TRUE -- Value indicating if html writer should finish the page immediately after this, or if there are other controls or routines which need to be called first </returns>
         public override bool Write_HTML(TextWriter Output, Custom_Tracer Tracer)
         {
+            // If restricted by IP, just print the message
+            if (isRestricted)
+            {
+                Output.WriteLine(restriction_message);
+                return true;
+            }
+
             Output.WriteLine("<center>");
 
             // Determine some variables
@@ -59,15 +97,6 @@ namespace SobekCM.Library.HTML
 
                 case "ri":
                     print_thumbnails(include_brief_citation, Output);
-                    break;
-
-                case "xx":
-                    int zoom_page = 1;
-                    if (mode.Length > 2)
-                    {
-                        Int32.TryParse(mode.Substring(2), out zoom_page);
-                    }
-                    print_jpeg2000(include_brief_citation, zoom_page, Output);
                     break;
 
                 case "jj":
@@ -133,69 +162,9 @@ namespace SobekCM.Library.HTML
             Output.WriteLine("</table>");
         }
 
-        private void print_jpeg2000(bool include_brief_citation, int page, TextWriter Output)
-        {
-            if (include_brief_citation)
-                print_brief_citation("700", Output);
 
-            // Get this page
-            Page_TreeNode thisPage = RequestSpecificValues.Current_Item.Web.Pages_By_Sequence[page-1];
 
-            // Find the jpeg2000 image and show the image
-            foreach (SobekCM_File_Info thisFile in thisPage.Files)
-            {
-                if (thisFile.System_Name.ToUpper().IndexOf(".JP2") > 0)
-                {
-                    int zoomlevels = zoom_levels( thisFile.Width, thisFile.Height );
-                    int currViewportSize = RequestSpecificValues.Current_Mode.Viewport_Size.HasValue ? RequestSpecificValues.Current_Mode.Viewport_Size.Value : 1;
-                    int size_pixels = 512 + (currViewportSize * 256);
-                    if (RequestSpecificValues.Current_Mode.Viewport_Size == 3)
-                        size_pixels = 1536;
-                    int currViewportRotation = RequestSpecificValues.Current_Mode.Viewport_Rotation.HasValue ? RequestSpecificValues.Current_Mode.Viewport_Rotation.Value : 0;
-                    int rotation = (currViewportRotation % 4) * 90;
 
-                    string jpeg2000_filename = thisFile.System_Name;
-                    if ((jpeg2000_filename.Length > 0) && (jpeg2000_filename[0] != '/'))
-                    {
-                        jpeg2000_filename = "/UFDC/" + RequestSpecificValues.Current_Item.Web.AssocFilePath + "/" + jpeg2000_filename;
-                    }
-
-                    // Build the source URL
-                    Output.Write("<img src=\"" + UI_ApplicationCache_Gateway.Settings.JP2ServerUrl + "imageserver?res=" + (zoomlevels - RequestSpecificValues.Current_Mode.Viewport_Zoom + 1) + "&viewwidth=" + size_pixels + "&viewheight=" + size_pixels);
-                    if (RequestSpecificValues.Current_Mode.Viewport_Zoom != 1)
-                        Output.Write("&x=" + RequestSpecificValues.Current_Mode.Viewport_Point_X + "&y=" + RequestSpecificValues.Current_Mode.Viewport_Point_Y);
-                    Output.WriteLine("&rotation=" + rotation + "&filename=" + jpeg2000_filename + "\" />");
-                    break;
-                }
-            }
-        }
-
-        private int zoom_levels( int width, int height )
-        {
-            // Get the current portal size in pixels
-            int currViewportSize = RequestSpecificValues.Current_Mode.Viewport_Size.HasValue ? RequestSpecificValues.Current_Mode.Viewport_Size.Value : 1;
-            float size_pixels = 512 + (currViewportSize * 256);
-            if (RequestSpecificValues.Current_Mode.Viewport_Size == 3)
-                size_pixels = 1536;
-
-            // Get the factor 
-            float width_factor = (width) / size_pixels;
-            float height_factor = (height) / size_pixels;
-            float max_factor = Math.Max(width_factor, height_factor);
-
-            // Return the zoom level
-            if ((max_factor > 1) && (max_factor <= 2))
-                return 2;
-            if ((max_factor > 2) && (max_factor <= 4))
-                return 3;
-            if ((max_factor > 4) && (max_factor <= 8))
-                return 4;
-            if (max_factor > 8)
-                return 5;
-
-            // If it made it here, image must be very small!
-            return 1;
-        }
 
         private void print_pages(bool include_brief_citation, int from_page, int to_page, TextWriter Output)
         {
@@ -285,8 +254,15 @@ namespace SobekCM.Library.HTML
             }
 
             Output.WriteLine("<div class=\"SobekCitation\">");
-       //     Citation_ItemViewer citationViewer = new Citation_ItemViewer(RequestSpecificValues, false);
-       //     Output.WriteLine(citationViewer.Standard_Citation_String(false,null));
+            Citation_ItemViewer citationViewer = new Citation_ItemViewer( UI_ApplicationCache_Gateway.Translation, UI_ApplicationCache_Gateway.Aggregations, false);
+            citationViewer.CurrentItem = RequestSpecificValues.Current_Item;
+            citationViewer.CurrentMode = RequestSpecificValues.Current_Mode;
+            citationViewer.Translator = UI_ApplicationCache_Gateway.Translation;
+            citationViewer.CurrentUser = RequestSpecificValues.Current_User;
+            citationViewer.Code_Manager = UI_ApplicationCache_Gateway.Aggregations;
+            citationViewer.Item_Restricted = isRestricted;
+
+            Output.WriteLine(citationViewer.Standard_Citation_String(false,null));
             Output.WriteLine("</div>");
         }
 

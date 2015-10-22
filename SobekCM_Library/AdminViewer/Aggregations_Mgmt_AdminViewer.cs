@@ -14,7 +14,6 @@ using SobekCM.Core.MemoryMgmt;
 using SobekCM.Core.Message;
 using SobekCM.Core.Navigation;
 using SobekCM.Engine_Library.Database;
-using SobekCM.Engine_Library.Navigation;
 using SobekCM.Library.Database;
 using SobekCM.Library.HTML;
 using SobekCM.Library.MainWriters;
@@ -32,8 +31,8 @@ namespace SobekCM.Library.AdminViewer
     /// authentication, such as online submittal, metadata editing, and system administrative tasks.<br /><br />
     /// During a valid html request, the following steps occur:
     /// <ul>
-    /// <li>Application state is built/verified by the <see cref="Application_State.Application_State_Builder"/> </li>
-    /// <li>Request is analyzed by the <see cref="Navigation.SobekCM_QueryString_Analyzer"/> and output as a <see cref="Navigation.SobekCM_Navigation_Object"/> </li>
+    /// <li>Application state is built/verified by the Application_State_Builder </li>
+    /// <li>Request is analyzed by the QueryString_Analyzer and output as a <see cref="Navigation_Object"/>  </li>
     /// <li>Main writer is created for rendering the output, in his case the <see cref="Html_MainWriter"/> </li>
     /// <li>The HTML writer will create the necessary subwriter.  Since this action requires authentication, an instance of the  <see cref="MySobek_HtmlSubwriter"/> class is created. </li>
     /// <li>The mySobek subwriter creates an instance of this viewer to view and edit existing item aggregationPermissions in this digital library</li>
@@ -317,7 +316,7 @@ namespace SobekCM.Library.AdminViewer
                                 };
 
                                 // Try to add this aggregation
-                                ErrorRestMessage msg = SobekEngineClient.Aggregations.Add_New_Aggregation(args);
+                                RestResponseMessage msg = SobekEngineClient.Aggregations.Add_New_Aggregation(args);
 
                                 // We are going to save some of the values here anyway, to assist with bulk adds
                                 enteredIsActive = is_active;
@@ -327,7 +326,7 @@ namespace SobekCM.Library.AdminViewer
                                 enteredLink = new_link;
                                 enteredThematicHeading = new_thematic_heading;
 
-                                if (msg.ErrorType == ErrorRestType.Successful)
+                                if (msg.ErrorTypeEnum == ErrorRestTypeEnum.Successful)
                                 {
                                     RequestSpecificValues.Current_Mode.Mode = Display_Mode_Enum.Aggregation;
                                     RequestSpecificValues.Current_Mode.Aggregation = new_aggregation_code;
@@ -350,7 +349,7 @@ namespace SobekCM.Library.AdminViewer
                         }
                     }
                 }
-                catch ( Exception ee )
+                catch
                 {
                     actionMessage = "General error while reading postback information";
                 }
@@ -365,7 +364,7 @@ namespace SobekCM.Library.AdminViewer
         }
 
         /// <summary> Title for the page that displays this viewer, this is shown in the search box at the top of the page, just below the banner </summary>
-        /// <value> This always returns the value 'HTML Skins' </value>
+        /// <value> This always returns the value 'Aggregation Management' </value>
         public override string Web_Title
         {
             get { return "Aggregation Management"; }

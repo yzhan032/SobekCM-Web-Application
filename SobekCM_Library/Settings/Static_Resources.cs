@@ -1,6 +1,10 @@
+#region Using directives
+
 using System;
 using System.IO;
 using System.Xml;
+
+#endregion
 
 namespace SobekCM.Library.Settings
 {
@@ -230,7 +234,9 @@ namespace SobekCM.Library.Settings
             New_Element_Jpg = "http://cdn.sobekrepository.org/images/misc/new_element.jpg";
             New_Element_Demo_Jpg = "http://cdn.sobekrepository.org/images/misc/new_element_demo.jpg";
             New_Folder_Jpg = "http://cdn.sobekrepository.org/images/misc/new_folder.jpg";
-            New_Item_Img = "http://cdn.sobekrepository.org/images/misc/new_item.gif";
+            New_Item_Img = "http://cdn.sobekrepository.org/images/misc/new_item_medium.png";
+            New_Item_Img_Large = "http://cdn.sobekrepository.org/images/misc/new_item_large.png";
+            New_Item_Img_Small = "http://cdn.sobekrepository.org/images/misc/new_item_small.png";
             Next_Png = "http://cdn.sobekrepository.org/images/bookturner/next.png";
             Next2_Png = "http://cdn.sobekrepository.org/images/bookturner/next2.png";
             No_Pages_Jpg = "http://cdn.sobekrepository.org/images/qc/no_pages.jpg";
@@ -260,7 +266,7 @@ namespace SobekCM.Library.Settings
             Rect_Large_Ico = "http://cdn.sobekrepository.org/images/qc/rect_large.ico";
             Rect_Medium_Ico = "http://cdn.sobekrepository.org/images/qc/rect_medium.ico";
             Rect_Small_Ico = "http://cdn.sobekrepository.org/images/qc/rect_small.ico";
-            Red_Pushpin_Png = "http://cdn.sobekrepository.org/images/misc/red-pushpin.png";
+            Red_Pushpin_Png = "http://cdn.sobekrepository.org/images/mapsearch/red-pushpin.png";
             Refresh_Img = "http://cdn.sobekrepository.org/images/misc/refresh.png";
             Refresh_Img_Small = "http://cdn.sobekrepository.org/images/misc/refresh_small.png";
             Refresh_Img_Large = "http://cdn.sobekrepository.org/images/misc/refresh_large.png";
@@ -282,6 +288,7 @@ namespace SobekCM.Library.Settings
             Search_Basic_Img = "http://cdn.sobekrepository.org/images/misc/search_basic.png";
             Search_Basic_MimeType_Img = "http://cdn.sobekrepository.org/images/misc/search_basic_mimetype.png";
             Search_Basic_Year_Range_Img = "http://cdn.sobekrepository.org/images/misc/search_basic_year_range.png";
+            Search_Basic_With_FullText_Img = "http://cdn.sobekrepository.org/images/misc/search_basic_with_fulltext.png";
             Search_Full_Text_Img = "http://cdn.sobekrepository.org/images/misc/search_full_text.png";
             Search_Full_Text_Exlude_Newspapers_Img = "http://cdn.sobekrepository.org/images/misc/search_fulltext_exclude_newspapers.png";
             Search_Map_Img = "http://cdn.sobekrepository.org/images/misc/search_map.png";
@@ -293,21 +300,21 @@ namespace SobekCM.Library.Settings
             Skins_Img = "http://cdn.sobekrepository.org/images/misc/skins.gif";
             Skins_Img_Small = "http://cdn.sobekrepository.org/images/misc/skins.png";
             Skins_Img_Large = "http://cdn.sobekrepository.org/images/misc/skins_lg.png";
-            Sobekcm_Css = "http://cdn.sobekrepository.org/css/sobekcm/4.8.7/SobekCM.min.css";
-            Sobekcm_Admin_Css = "http://cdn.sobekrepository.org/css/sobekcm-admin/4.8.7/SobekCM_Admin.min.css";
-            Sobekcm_Admin_Js = "http://cdn.sobekrepository.org/js/sobekcm-admin/4.8.7/sobekcm_admin.js";
+            Sobekcm_Css = "http://cdn.sobekrepository.org/css/sobekcm/4.9.0/sobekcm.min.css";
+            Sobekcm_Admin_Css = "http://cdn.sobekrepository.org/css/sobekcm-admin/4.9.0/sobekcm_admin.min.css";
+            Sobekcm_Admin_Js = "http://cdn.sobekrepository.org/js/sobekcm-admin/4.9.0/sobekcm_admin.js";
             Sobekcm_Bookturner_Css = "http://cdn.sobekrepository.org/css/sobekcm-bookturner/4.8.4/SobekCM_BookTurner.css";
             Sobekcm_Datatables_Css = "http://cdn.sobekrepository.org/css/sobekcm-datatables/4.8.4/SobekCM_DataTables.css";
-            Sobekcm_Full_Js = "http://cdn.sobekrepository.org/js/sobekcm-full/4.8.9/sobekcm_full.min.js";
-            Sobekcm_Item_Css = "http://cdn.sobekrepository.org/css/sobekcm-item/4.8.4/SobekCM_Item.min.css";
+            Sobekcm_Full_Js = "http://cdn.sobekrepository.org/js/sobekcm-full/4.9.0/sobekcm_full.min.js";
+            Sobekcm_Item_Css = "http://cdn.sobekrepository.org/css/sobekcm-item/4.9.0/sobekCM_item.min.css";
             Sobekcm_Map_Editor_Js = "http://cdn.sobekrepository.org/js/sobekcm-map-editor/4.8.4/sobekcm_map_editor.js";
             Sobekcm_Map_Search_Js = "http://cdn.sobekrepository.org/js/sobekcm-map/4.8.4/sobekcm_map_search.js";
-            Sobekcm_Map_Tool_Js = "http://cdn.sobekrepository.org/js/sobekcm-map/4.8.4/sobekcm_map_tool.js";
+            Sobekcm_Map_Tool_Js = "http://cdn.sobekrepository.org/js/sobekcm-map/4.8.11/sobekcm_map_tool.js";
             Sobekcm_Mapeditor_Css = "http://cdn.sobekrepository.org/css/sobekcm-map/4.8.4/SobekCM_MapEditor.css";
             Sobekcm_Mapsearch_Css = "http://cdn.sobekrepository.org/css/sobekcm-map/4.8.4/SobekCM_MapSearch.css";
             Sobekcm_Metadata_Css = "http://cdn.sobekrepository.org/css/sobekcm-metadata/4.8.4/SobekCM_Metadata.min.css";
-            Sobekcm_Metadata_Js = "http://cdn.sobekrepository.org/js/sobekcm-metadata/4.8.4/sobekcm_metadata.js";
-            Sobekcm_Mysobek_Css = "http://cdn.sobekrepository.org/css/sobekcm-mysobek/4.8.4/SobekCM_MySobek.min.css";
+            Sobekcm_Metadata_Js = "http://cdn.sobekrepository.org/js/sobekcm-metadata/4.8.11/sobekcm_metadata.min.js";
+            Sobekcm_Mysobek_Css = "http://cdn.sobekrepository.org/css/sobekcm-mysobek/4.8.11/sobekCM_mysobek.min.css";
             Sobekcm_Print_Css = "http://cdn.sobekrepository.org/css/sobekcm-print/4.8.4/SobekCM_Print.css";
             Sobekcm_Qc_Css = "http://cdn.sobekrepository.org/css/sobekcm-qc/4.8.4/SobekCM_QC.css";
             Sobekcm_Qc_Js = "http://cdn.sobekrepository.org/js/sobekcm-qc/4.8.4/sobekcm_qc.js";
@@ -359,6 +366,16 @@ namespace SobekCM.Library.Settings
             View_Ico = "http://cdn.sobekrepository.org/images/qc/View.ico";
             View_Work_Log_Img = "http://cdn.sobekrepository.org/images/misc/view_work_log.png";
             View_Work_Log_Img_Large = "http://cdn.sobekrepository.org/images/misc/view_work_log_icon.png";
+            Warning_Img = "http://cdn.sobekrepository.org/images/misc/warning.png";
+            WebContent_Img = "http://cdn.sobekrepository.org/images/misc/web_content_medium.png";
+            WebContent_Img_Small = "http://cdn.sobekrepository.org/images/misc/web_content_small.png";
+            WebContent_Img_Large = "http://cdn.sobekrepository.org/images/misc/web_content_large.png";
+            WebContent_History_Img = "http://cdn.sobekrepository.org/images/misc/webcontent_history.png";
+            WebContent_History_Img_Small = "http://cdn.sobekrepository.org/images/misc/webcontent_history_small.png";
+            WebContent_History_Img_Large = "http://cdn.sobekrepository.org/images/misc/webcontent_history_large.png";
+            WebContent_Usage_Img = "http://cdn.sobekrepository.org/images/misc/webcontent_usage.png";
+            WebContent_Usage_Img_Small = "http://cdn.sobekrepository.org/images/misc/webcontent_usage_small.png";
+            WebContent_Usage_Img_Large = "http://cdn.sobekrepository.org/images/misc/webcontent_usage_large.png";
             Wizard_Img = "http://cdn.sobekrepository.org/images/misc/wizard.png";
             Wizard_Img_Large = "http://cdn.sobekrepository.org/images/misc/wizard_lg.png";
             Wordmarks_Img = "http://cdn.sobekrepository.org/images/misc/wordmarks.png";
@@ -1024,8 +1041,14 @@ namespace SobekCM.Library.Settings
         /// <summary> URL for the default resource 'new_folder.jpg' file ( http://cdn.sobekrepository.org/images/misc/new_folder.jpg by default)</summary>
         public static string New_Folder_Jpg { get; private set; }
 
-        /// <summary> URL for the default resource 'new_item.gif' file ( http://cdn.sobekrepository.org/images/misc/new_item.gif by default)</summary>
+        /// <summary> URL for the default resource 'new_item_medium.png' file ( http://cdn.sobekrepository.org/images/misc/new_item_medium.png by default)</summary>
         public static string New_Item_Img { get; private set; }
+
+        /// <summary> URL for the default resource 'new_item_large.png' file ( http://cdn.sobekrepository.org/images/misc/new_item_large.png by default)</summary>
+        public static string New_Item_Img_Large { get; private set; }
+
+        /// <summary> URL for the default resource 'new_item_small.png' file ( http://cdn.sobekrepository.org/images/misc/new_item_small.png by default)</summary>
+        public static string New_Item_Img_Small { get; private set; }
 
         /// <summary> URL for the default resource 'next.png' file ( http://cdn.sobekrepository.org/images/bookturner/next.png by default)</summary>
         public static string Next_Png { get; private set; }
@@ -1179,6 +1202,9 @@ namespace SobekCM.Library.Settings
 
         /// <summary> URL for the default resource 'search_basic_year_range.png' file ( http://cdn.sobekrepository.org/images/misc/search_basic_year_range.png by default)</summary>
         public static string Search_Basic_Year_Range_Img { get; private set; }
+
+        /// <summary> URL for the default resource 'search_basic_year_range.png' file ( http://cdn.sobekrepository.org/images/misc/search_basic_with_fulltext.png by default)</summary>
+        public static string Search_Basic_With_FullText_Img { get; private set; }
 
         /// <summary> URL for the default resource 'search_full_text.png' file ( http://cdn.sobekrepository.org/images/misc/search_full_text.png by default)</summary>
         public static string Search_Full_Text_Img { get; private set; }
@@ -1410,6 +1436,36 @@ namespace SobekCM.Library.Settings
 
         /// <summary> URL for the default resource 'view_work_log_icon.png' file ( http://cdn.sobekrepository.org/images/misc/view_work_log_icon.png by default)</summary>
         public static string View_Work_Log_Img_Large { get; private set; }
+
+        /// <summary> URL for the default resource 'warning.png' file ( http://cdn.sobekrepository.org/images/misc/warnging.png by default)</summary>
+        public static string Warning_Img { get; private set; }
+
+        /// <summary> URL for the default resource 'web_content_medium.png' file ( http://cdn.sobekrepository.org/images/misc/web_content_medium.png by default)</summary>
+        public static string WebContent_Img { get; private set; }
+
+        /// <summary> URL for the default resource 'web_content_small.png' file ( http://cdn.sobekrepository.org/images/misc/web_content_small.png by default)</summary>
+        public static string WebContent_Img_Small { get; private set; }
+
+        /// <summary> URL for the default resource 'web_content_large.png' file ( http://cdn.sobekrepository.org/images/misc/web_content_large.png by default)</summary>
+        public static string WebContent_Img_Large { get; private set; }
+
+        /// <summary> URL for the default resource 'webcontent_history.png' file ( http://cdn.sobekrepository.org/images/misc/webcontent_history.png by default)</summary>
+        public static string WebContent_History_Img { get; private set; }
+
+        /// <summary> URL for the default resource 'webcontent_history_small.png' file ( http://cdn.sobekrepository.org/images/misc/webcontent_history_small.png by default)</summary>
+        public static string WebContent_History_Img_Small { get; private set; }
+
+        /// <summary> URL for the default resource 'webcontent_history_large.png' file ( http://cdn.sobekrepository.org/images/misc/webcontent_history_large.png by default)</summary>
+        public static string WebContent_History_Img_Large { get; private set; }
+
+        /// <summary> URL for the default resource 'webcontent_usage.png' file ( http://cdn.sobekrepository.org/images/misc/webcontent_usage.png by default)</summary>
+        public static string WebContent_Usage_Img { get; private set; }
+
+        /// <summary> URL for the default resource 'webcontent_usage_small.png' file ( http://cdn.sobekrepository.org/images/misc/webcontent_usage_small.png by default)</summary>
+        public static string WebContent_Usage_Img_Small { get; private set; }
+
+        /// <summary> URL for the default resource 'webcontent_usage_large.png' file ( http://cdn.sobekrepository.org/images/misc/webcontent_usage_large.png by default)</summary>
+        public static string WebContent_Usage_Img_Large { get; private set; }
 
         /// <summary> URL for the default resource 'wizard.png' file ( http://cdn.sobekrepository.org/images/misc/wizard.png by default)</summary>
         public static string Wizard_Img { get; private set; }
@@ -2323,6 +2379,14 @@ namespace SobekCM.Library.Settings
                     New_Item_Img = Source;
                     break;
 
+                case "new_item_img_large":
+                    New_Item_Img_Large = Source;
+                    break;
+
+                case "new_item_img_small":
+                    New_Item_Img_Small = Source;
+                    break;
+
                 case "next_img":
                     Next_Png = Source;
                     break;
@@ -2527,6 +2591,10 @@ namespace SobekCM.Library.Settings
 
                 case "search_basic_year_range_img":
                     Search_Basic_Year_Range_Img = Source;
+                    break;
+
+                case "search_basic_with_fulltext_img":
+                    Search_Basic_With_FullText_Img = Source;
                     break;
 
                 case "search_full_text_img":
@@ -2839,6 +2907,46 @@ namespace SobekCM.Library.Settings
                     View_Work_Log_Img_Large = Source;
                     break;
 
+                case "warning_img":
+                    Warning_Img = Source;
+                    break;
+
+                case "webcontent_img":
+                    WebContent_Img = Source;
+                    break;
+
+                case "webcontent_img_small":
+                    WebContent_Img_Small = Source;
+                    break;
+
+                case "webcontent_img_large":
+                    WebContent_Img_Large = Source;
+                    break;
+
+                case "webcontent_history_img":
+                    WebContent_History_Img = Source;
+                    break;
+
+                case "webcontent_history_img_small":
+                    WebContent_History_Img_Small = Source;
+                    break;
+
+                case "webcontent_history_img_large":
+                    WebContent_History_Img_Large = Source;
+                    break;
+
+                case "webcontent_usage_img":
+                    WebContent_Usage_Img = Source;
+                    break;
+
+                case "webcontent_usage_img_small":
+                    WebContent_Usage_Img_Small = Source;
+                    break;
+
+                case "webcontent_usage_img_large":
+                    WebContent_Usage_Img_Large = Source;
+                    break;
+
                 case "wizard_img":
                     Wizard_Img = Source;
                     break;
@@ -2933,8 +3041,6 @@ namespace SobekCM.Library.Settings
                 if (readerXml != null) readerXml.Close();
                 if (readerStream != null) readerStream.Close();
             }
-
-            Sobekcm_Css = "http://cdn.sobekdigital.com/css/sobekcm/4.8.10/sobekcm.css";
 
             return returnValue;
         }

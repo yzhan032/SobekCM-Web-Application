@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using SobekCM.Core.Navigation;
-using SobekCM.Engine_Library.Navigation;
 using SobekCM.Library.Settings;
 using SobekCM.Resource_Object.Bib_Info;
 using SobekCM.Resource_Object.Divisions;
@@ -95,7 +94,7 @@ namespace SobekCM.Library.ItemViewer.Viewers
 
             // If coordinates were passed in, pull the actual coordinates out of the URL
             validCoordinateSearchFound = false;
-            if (CurrentMode.Coordinates.Length > 0)
+            if (!String.IsNullOrEmpty(CurrentMode.Coordinates))
             {
                 string[] splitter = CurrentMode.Coordinates.Split(",".ToCharArray());
                 if (((splitter.Length > 1) && (splitter.Length < 4)) || ((splitter.Length == 4) && (splitter[2].Length == 0) && (splitter[3].Length == 0)))
@@ -382,7 +381,7 @@ namespace SobekCM.Library.ItemViewer.Viewers
 
                 // If there is a coordinate search here
                 if (( allPolygons.Count > 1) &&
-                    ((CurrentMode.Coordinates.Length > 0) && (matchingTilesList != null) || (googleItemSearch)))
+                    (( !String.IsNullOrEmpty(CurrentMode.Coordinates)) && (matchingTilesList != null) || (googleItemSearch)))
                 {
                     if (googleItemSearch)
                     {

@@ -11,7 +11,6 @@ using System.Text.RegularExpressions;
 using System.Web;
 using SobekCM.Core.Configuration;
 using SobekCM.Core.Navigation;
-using SobekCM.Engine_Library.Navigation;
 using SobekCM.Library.Database;
 using SobekCM.Library.HTML;
 using SobekCM.Library.MainWriters;
@@ -29,8 +28,8 @@ namespace SobekCM.Library.AdminViewer
     /// authentication, such as online submittal, metadata editing, and system administrative tasks.<br /><br />
     /// During a valid html request, the following steps occur:
     /// <ul>
-    /// <li>Application state is built/verified by the <see cref="Application_State.Application_State_Builder"/> </li>
-    /// <li>Request is analyzed by the <see cref="Navigation.SobekCM_QueryString_Analyzer"/> and output as a <see cref="Navigation.SobekCM_Navigation_Object"/> </li>
+    /// <li>Application state is built/verified by the Application_State_Builder </li>
+    /// <li>Request is analyzed by the QueryString_Analyzer and output as a <see cref="Navigation_Object"/>  </li>
     /// <li>Main writer is created for rendering the output, in his case the <see cref="Html_MainWriter"/> </li>
     /// <li>The HTML writer will create the necessary subwriter.  Since this action requires authentication, an instance of the  <see cref="MySobek_HtmlSubwriter"/> class is created. </li>
     /// <li>The mySobek subwriter creates an instance of this viewer to show the library-wide system settings in this digital library</li>
@@ -110,14 +109,14 @@ namespace SobekCM.Library.AdminViewer
 	            if (form["admin_settings_order"] == "category")
 	            {
 		            RequestSpecificValues.Current_User.Add_Setting("Settings_AdminViewer:Category_View", "true");
-                    Library.Database.SobekCM_Database.Set_User_Setting(RequestSpecificValues.Current_User.UserID, "Settings_AdminViewer:Category_View", "true");
+                    SobekCM_Database.Set_User_Setting(RequestSpecificValues.Current_User.UserID, "Settings_AdminViewer:Category_View", "true");
 		            category_view = true;
 	            }
 
 				if (form["admin_settings_order"] == "alphabetical")
 				{
 					RequestSpecificValues.Current_User.Add_Setting("Settings_AdminViewer:Category_View", "false");
-                    Library.Database.SobekCM_Database.Set_User_Setting(RequestSpecificValues.Current_User.UserID, "Settings_AdminViewer:Category_View", "false");
+                    SobekCM_Database.Set_User_Setting(RequestSpecificValues.Current_User.UserID, "Settings_AdminViewer:Category_View", "false");
 					category_view = false;
 				}
 
@@ -234,6 +233,7 @@ namespace SobekCM.Library.AdminViewer
             if (!limitedRightsMode) Add_Setting_UI("Application Server Network", "Server Configuration", -1, empty_options, "Server share for the web application's network location.\n\nExample: '\\\\lib-sandbox\\Production\\'", false, default_location);
             Add_Setting_UI("Application Server URL", "Server Configuration", -1, empty_options, "Base URL which points to the web application.\n\nExamples: 'http://localhost/sobekcm/', 'http://ufdc.ufl.edu/', etc..", false, default_url).Set_ReadOnly(limitedRightsMode); 
             if (!limitedRightsMode ) Add_Setting_UI("Archive DropBox", "Archiving", -1, empty_options, "Network location for the archive drop box.  If this is set to a value, the builder/bulk loader will place a copy of the package in this folder for archiving purposes.  This folder is where any of your archiving processes should look for new packages.", false);
+            if (!limitedRightsMode) Add_Setting_UI("Builder Add PageTurner ItemViewer", "Builder", 70, boolean_options, "Flag indicates if the page turner view should be added automatically to all items with four or more pages.", false);
             if (!limitedRightsMode) Add_Setting_UI("Builder IIS Logs Directory", "Builder", -1, empty_options, "IIS web log location (usually a network share) for the builder to read the logs and add the usage statistics to the database.", false );
             Add_Setting_UI("Builder Log Expiration in Days", "Builder", 200, new[] {"10", "30", "365", "99999"}, "Number of days the SobekCM Builder logs are retained.", false, "10").Set_ReadOnly(limitedRightsMode);
             Add_Setting_UI("Builder Operation Flag", "Builder", 200, new[] { "STANDARD OPERATION", "PAUSE REQUESTED", "ABORT REQUESTED", "NO BUILDER REQUESTED" }, "Last flag set when the builder/bulk loader ran.", false).Set_ReadOnly(limitedRightsMode);
@@ -241,12 +241,19 @@ namespace SobekCM.Library.AdminViewer
             Add_Setting_UI("Builder Send Usage Emails", "Builder", 70, boolean_options, "Flag indicates is usage emails should be sent automatically after the stats usage has been calculated and added to the database.", false);
             if (!limitedRightsMode) Add_Setting_UI("Caching Server", "Server Configuration", -1, empty_options, "URL for the AppFabric Cache host machine, if a caching server/cluster is in use in this system.", false);
             Add_Setting_UI("Can Remove Single Search Term", "General Appearance", 70, boolean_options, "When this is set to TRUE, users can remove a single search term from their current search.  Setting this to FALSE, makes the display slightly cleaner.", false);
-            Add_Setting_UI("Can Submit Edit Online", "Resource Files", 70, boolean_options, "Flag dictates if users can submit items online, or if this is disabled in this system.", false);
+            Add_Setting_UI("Can Submit Items Online", "Resource Files", 70, boolean_options, "Flag dictates if users can submit items online, or if this is disabled in this system.", false);
             Add_Setting_UI("Convert Office Files to PDF", "Resource Files", 70, boolean_options, "Flag dictates if users can submit items online, or if this is disabled in this system.", false, "false");
             Add_Setting_UI("Create MARC Feed By Default", "Interoperability", 70, boolean_options, "Flag indicates if the builder/bulk loader should create the MARC feed by default when operating in background mode.", false);
             if (!limitedRightsMode) Add_Config_Setting("Database Type", "Server Configuration", UI_ApplicationCache_Gateway.Settings.Database_Connections[0].Database_Type_String, "Type of database used to drive the SobekCM system.\n\nCurrently, only Microsoft SQL Server is allowed with plans to add PostgreSQL to the supported database system.\n\nThis value resides in the configuration on the web server.  See your database and web server administrator to change this value.");
             if (!limitedRightsMode) Add_Config_Setting("Database Connection String", "Server Configuration", UI_ApplicationCache_Gateway.Settings.Database_Connections[0].Connection_String, "Connection string used to connect to the SobekCM database\n\nThis value resides in the configuration file on the web server.  See your database and web server administrator to change this value.");
-            Add_Setting_UI("Detailed User Permissions", "System Configuration", -1, boolean_options, "Flag indicates if more refined RequestSpecificValues.Current_User permissions can be assigned, such as if a RequestSpecificValues.Current_User can edit behaviors of an item in a collection vs. a more general flag that says a RequestSpecificValues.Current_User can make all changes to an item in a collection.", false);
+            Add_Setting_UI("Detailed User Permissions", "System Configuration", -1, boolean_options, "Flag indicates if more refined user permissions can be assigned, such as if a user can edit behaviors of an item in a collection vs. a more general flag that says a RequestSpecificValues.Current_User can make all changes to an item in a collection.", false);
+
+            if (!limitedRightsMode)
+            {
+                Add_Setting_UI("Disable Standard User Logon Flag", "System Configuration", -1, boolean_options, "Flag indicates if non system administrators are temporarily barred from logging on.", false);
+                Add_Setting_UI("Disable Standard User Logon Message", "System Configuration", -1, empty_options, "Message displayed if non syste administrators are temporarily barred from logging on.", false);
+            }
+
             if (!limitedRightsMode) Add_Setting_UI("Document Solr Index URL", "Server Configuration", -1, empty_options, "URL for the document-level solr index.\n\nExample: 'http://localhost:8080/documents'", false);
             Add_Config_Setting("Error Emails", "Emails", UI_ApplicationCache_Gateway.Settings.System_Error_Email, "Email address for the web application to mail for any errors encountered while executing requests.\n\nThis account will be notified of inabilities to connect to servers, potential attacks, missing files, etc..\n\nIf the system is able to connect to the database, the 'System Error Email' address listed there, if there is one, will be used instead.\n\nUse a semi-colon betwen email addresses if multiple addresses are included.\n\nExample: 'person1@corp.edu;person2@corp2.edu'.\n\nThis value resides in the web.config file on the web server.  See your web server administrator to change this value.");
             Add_Config_Setting("Error HTML Page", "System Configuration", UI_ApplicationCache_Gateway.Settings.System_Error_URL, "Static page the user should be redirected towards if an unexpected exception occurs which cannot be handled by the web application.\n\nExample: 'http://ufdc.ufl.edu/error.html'.\n\nThis value resides in the web.config file on the web server.  See your web server administrator to change this value.");
@@ -269,7 +276,7 @@ namespace SobekCM.Library.AdminViewer
             Add_Setting_UI("JPEG Height", "Resource Files", 60, empty_options, "Restriction on the size of the jpeg page images' height (in pixels) when generated automatically by the builder/bulk loader.\n\nDefault: '1000'", false);
             Add_Setting_UI("JPEG Width", "Resource Files", 60, empty_options, "Restriction on the size of the jpeg page images' width (in pixels) when generated automatically by the builder/bulk loader.\n\nDefault: '630'", false);
             if (!limitedRightsMode) Add_Setting_UI("JPEG2000 Server", "Server Configuration", -1, empty_options, "URL for the Aware JPEG2000 Server for displaying and zooming into JPEG2000 images.", false);
-            Add_Setting_UI("JPEG2000 Server Type", "Server Configuration", -1, new[] { "Aware", "Built-In IIPImage", "None" }, "Type of the JPEG2000 server found at the URL above.", false).Set_ReadOnly(limitedRightsMode);
+            Add_Setting_UI("JPEG2000 Server Type", "Server Configuration", -1, new[] { "Built-In IIPImage", "None" }, "Type of the JPEG2000 server found at the URL above.", false).Set_ReadOnly(limitedRightsMode);
             Add_Setting_UI("Kakadu JPEG2000 Create Command", "Resource Files", -1, empty_options, "Kakadu JPEG2000 script will override the specifications used when creating zoomable images.\n\nIf this is blank, the default specifications will be used which match those used by the National Digital Newspaper Program and University of Florida Digital Collections.", false);
             if (!limitedRightsMode) Add_Setting_UI("Log Files Directory", "Builder", -1, empty_options, "Network location for the share within which the builder/bulk loader logs should be copied to become web accessible.\n\nExample: '\\\\lib-sandbox\\Design\\extra\\logs\\'", false, default_location + "design\\extra\\logs\\");
             if (!limitedRightsMode) Add_Setting_UI("Log Files URL", "Builder", -1, empty_options, "URL for the builder/bulk loader logs files.\n\nExample: 'http://ufdc.ufl.edu/design/extra/logs/'", false, default_url + "design/exra/logs/");

@@ -1,8 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿#region Using directives
+
+using System;
+
+#endregion
 
 namespace SobekCM.Core.MicroservicesClient
 {
@@ -13,14 +13,20 @@ namespace SobekCM.Core.MicroservicesClient
         JSON = 1,
 
         /// <summary> Output of this endpoint is Protocol Buffer octet-stream </summary>
-        PROTOBUF = 2
+        PROTOBUF = 2,
+
+        /// <summary> Output of this endpoint is JSON-P </summary>
+        JSON_P,
+
+        /// <summary> Output of this endpoint is XML </summary>
+        XML
     }
 
     /// <summary> Defines a single endpoint for a microservices client </summary>
     public class MicroservicesClient_Endpoint
     {
         /// <summary> Complete URL for this microservices endpoint </summary>
-        public readonly string URL;
+        public string URL { get; internal set; }
 
         /// <summary> Protocol to use when connecting to this endpoint, via the URL </summary>
         public readonly Microservice_Endpoint_Protocol_Enum Protocol;

@@ -25,8 +25,8 @@ namespace SobekCM.Library.AggregationViewer.Viewers
     /// Collection viewers are used when displaying collection home pages, searches, browses, and information pages.<br /><br />
     /// During a valid html request to display the usage statistics page, the following steps occur:
     /// <ul>
-    /// <li>Application state is built/verified by the <see cref="Application_State_Builder"/> </li>
-    /// <li>Request is analyzed by the <see cref="SobekCM_QueryString_Analyzer"/> and output as a <see cref="Navigation.SobekCM_Navigation_Object"/> </li>
+    /// <li>Application state is built/verified by the Application_State_Builder </li>
+    /// <li>Request is analyzed by the <see cref="QueryString_Analyzer"/> and output as a <see cref="Navigation_Object"/>  </li>
     /// <li>Main writer is created for rendering the output, in this case the <see cref="Html_MainWriter"/> </li>
     /// <li>The HTML writer will create the necessary subwriter.  For a collection-level request, an instance of the  <see cref="Aggregation_HtmlSubwriter"/> class is created. </li>
     /// <li>To display the requested collection view, the collection subwriter will creates an instance of this class </li>
@@ -160,6 +160,30 @@ namespace SobekCM.Library.AggregationViewer.Viewers
         /// <remarks> This writes the HTML from the static browse or info page here  </remarks>
         public override void Add_Secondary_HTML(TextWriter Output, Custom_Tracer Tracer)
         {
+            if (Tracer != null)
+            {
+                Tracer.Add_Trace("Private_Items_AggregationViewer.Add_Secondary_HTML", "Adding HTML");
+            }
+
+            if (privateItems == null)
+            {
+                Output.WriteLine("<div class=\"SobekText\">");
+                Output.WriteLine("<p><strong>ERROR PULLING INFORMATION FROM DATABASE</strong></p>");
+                Output.WriteLine("</div>");
+                return;
+            }
+
+            if (privateItems.TotalItems == 0)
+            {
+                Output.WriteLine("<div class=\"SobekText\">");
+                Output.WriteLine("<br />");
+                Output.WriteLine("<p><strong>This collection does not include any PRIVATE or DARK items.</strong></p>");
+                Output.WriteLine("<br />");
+                Output.WriteLine("</div>");
+                return;
+            }
+
+
             // Get the URL for the sort options
             short sort = RequestSpecificValues.Current_Mode.Sort.HasValue ? RequestSpecificValues.Current_Mode.Sort.Value : ((short) 0);
             RequestSpecificValues.Current_Mode.Sort = 0;
@@ -237,6 +261,35 @@ namespace SobekCM.Library.AggregationViewer.Viewers
                 Output.WriteLine("</span>");
             }
 
+            const string EMBARGO_DATE_STRING = "Embargoed until {0}";
+
+
+
+
+            Output.WriteLine("<div class=\"SobekText\">");
+            Output.WriteLine("<br />");
+            Output.WriteLine("<p>Below is the list of all items linked to this aggregation which are either private (in process) or dark.</p>");
+            if (privateItems.TotalItems == 1)
+                Output.WriteLine("<p>There is only one matching item.</p>");
+            else
+            {
+                if (privateItems.TotalTitles == privateItems.TotalItems)
+                {
+                    Output.WriteLine("<p>There are a total of " + privateItems.TotalItems + " titles.</p>");
+                }
+                else
+                {
+                    Output.Write("<p>There are a total of " + privateItems.TotalItems + " items in ");
+                    if (privateItems.TotalTitles == 1)
+                        Output.WriteLine("one title.</p>");
+                    else
+                        Output.WriteLine(privateItems.TotalTitles + " titles.</p>");
+                }
+            }
+
+            Output.WriteLine("<br />");
+            Output.WriteLine("</div>");
+
             // Should buttons be added here for additional pages?
             if (privateItems.TotalTitles > RESULTS_PER_PAGE)
             {
@@ -275,18 +328,24 @@ namespace SobekCM.Library.AggregationViewer.Viewers
                 if (current_page > 1)
                 {
                     RequestSpecificValues.Current_Mode.Page = 1;
-                    Output.WriteLine("    &nbsp; &nbsp; &nbsp; <a href=\"" + UrlWriterHelper.Redirect_URL(RequestSpecificValues.Current_Mode) + "\"><img src=\"" + RequestSpecificValues.Current_Mode.Base_URL + "design/skins/" + RequestSpecificValues.HTML_Skin.Base_Skin_Code + "/buttons/first_button" + language_suffix + ".gif\" border=\"0\" alt=\"" + first_page + "\" /></a> &nbsp; ");
+                    Output.WriteLine("    &nbsp; &nbsp; &nbsp; <button title=\"" + first_page + "\" class=\"roundbutton\" onclick=\"window.location='" + UrlWriterHelper.Redirect_URL(RequestSpecificValues.Current_Mode) + "'; return false;\"><img src=\"" + Static_Resources.Button_First_Arrow_Png + "\" class=\"roundbutton_img_left\" alt=\"\" /> " + first_page + " </button>&nbsp;");
+
                     RequestSpecificValues.Current_Mode.Page = (ushort)(current_page - 1);
-                    Output.WriteLine("    <a href=\"" + UrlWriterHelper.Redirect_URL(RequestSpecificValues.Current_Mode) + "\"><img src=\"" + RequestSpecificValues.Current_Mode.Base_URL + "design/skins/" + RequestSpecificValues.HTML_Skin.Base_Skin_Code + "/buttons/previous_button" + language_suffix + ".gif\" border=\"0\" alt=\"" + previous_page + "\" /></a>");
+                    Output.WriteLine("    <button title=\"" + previous_page + "\" class=\"roundbutton\" onclick=\"window.location='" + UrlWriterHelper.Redirect_URL(RequestSpecificValues.Current_Mode) + "'; return false;\"><img src=\"" + Static_Resources.Button_Previous_Arrow_Png + "\" class=\"roundbutton_img_left\" alt=\"\" /> " + previous_page + " </button>");
                 }
                 else
                 {
-                    Output.WriteLine("    <img src=\"" + RequestSpecificValues.Current_Mode.Base_URL + "design/skins/" + RequestSpecificValues.HTML_Skin.Base_Skin_Code + "/buttons/no_button_spacer.gif\" />");
+                    Output.WriteLine("    <div style=\"width:160px\">&nbsp;</div>");
                 }
                 Output.WriteLine("  </span>");
 
                 // Calculate the maximum number of pages
                 ushort pages = (ushort)(Math.Ceiling(privateItems.TotalTitles / RESULTS_PER_PAGE));
+
+                int start_title = (int) (1 + ((current_page - 1)*RESULTS_PER_PAGE));
+                int end_title = (int) (Math.Min(start_title + RESULTS_PER_PAGE, privateItems.TotalTitles));
+
+                Output.WriteLine("<span style=\"text-align:center;margin-left:auto; margin-right:auto\">" + start_title + " - " + end_title + " of " + privateItems.TotalTitles + " matching titles</span>");
 
 
                 // Should the next and last buttons be enabled?
@@ -294,14 +353,16 @@ namespace SobekCM.Library.AggregationViewer.Viewers
                 if (current_page < pages)
                 {
                     RequestSpecificValues.Current_Mode.Page = (ushort)(current_page + 1);
-                    Output.WriteLine("    <a href=\"" + UrlWriterHelper.Redirect_URL(RequestSpecificValues.Current_Mode) + "\"><img src=\"" + RequestSpecificValues.Current_Mode.Base_URL + "design/skins/" + RequestSpecificValues.HTML_Skin.Base_Skin_Code + "/buttons/next_button" + language_suffix + ".gif\" border=\"0\" alt=\"" + next_page + "\" /></a>&nbsp;");
+                    Output.WriteLine("    <button title=\"" + next_page + "\" class=\"roundbutton\" onclick=\"window.location='" + UrlWriterHelper.Redirect_URL(RequestSpecificValues.Current_Mode) + "'; return false;\"> " + next_page + " <img src=\"" + Static_Resources.Button_Next_Arrow_Png + "\" class=\"roundbutton_img_right\" alt=\"\" /></button>&nbsp;");
+
                     RequestSpecificValues.Current_Mode.Page = pages;
-                    Output.WriteLine("    <a href=\"" + UrlWriterHelper.Redirect_URL(RequestSpecificValues.Current_Mode) + "\"><img src=\"" + RequestSpecificValues.Current_Mode.Base_URL + "design/skins/" + RequestSpecificValues.HTML_Skin.Base_Skin_Code + "/buttons/last_button" + language_suffix + ".gif\" border=\"0\" alt=\"" + last_page + "\" /></a> &nbsp; &nbsp; &nbsp; ");
+                    Output.WriteLine("    <button title=\"" + last_page + "\" class=\"roundbutton\" onclick=\"window.location='" + UrlWriterHelper.Redirect_URL(RequestSpecificValues.Current_Mode) + "'; return false;\"> " + last_page + " <img src=\"" + Static_Resources.Button_Last_Arrow_Png + "\" class=\"roundbutton_img_right\" alt=\"\" /></button>");
                 }
                 else
                 {
-                    Output.WriteLine("    <img src=\"" + RequestSpecificValues.Current_Mode.Base_URL + "design/skins/" + RequestSpecificValues.HTML_Skin.Base_Skin_Code + "/buttons/no_button_spacer.gif\" />");
+                    Output.WriteLine("    <div style=\"width:160px\">&nbsp;</div>");
                 }
+
                 Output.WriteLine("  </span>");
                 RequestSpecificValues.Current_Mode.Page = current_page;
 
@@ -309,57 +370,6 @@ namespace SobekCM.Library.AggregationViewer.Viewers
             }
 
             Output.WriteLine("<br />");
-
-
-            const string EMBARGO_DATE_STRING = "Embargoed until {0}";
-
-
-            if (Tracer != null)
-            {
-                Tracer.Add_Trace("Private_Items_AggregationViewer.Add_Secondary_HTML", "Adding HTML");
-            }
-
-            if (privateItems == null)
-            {
-                Output.WriteLine("<div class=\"SobekText\">");
-                Output.WriteLine("<p><strong>ERROR PULLING INFORMATION FROM DATABASE</strong></p>");
-                Output.WriteLine("</div>");
-                return;
-            }
-
-            if (privateItems.TotalItems == 0)
-            {
-                Output.WriteLine("<div class=\"SobekText\">");
-                Output.WriteLine("<br />");
-                Output.WriteLine("<p><strong>This collection does not include any PRIVATE or DARK items.</strong></p>");
-                Output.WriteLine("<br />");
-                Output.WriteLine("</div>");
-                return;
-            }
-
-            Output.WriteLine("<div class=\"SobekText\">");
-            Output.WriteLine("<br />");
-            Output.WriteLine("<p>Below is the list of all items linked to this aggregation which are either private (in process) or dark.</p>");
-            if (privateItems.TotalItems == 1)
-                Output.WriteLine("<p>There is only one matching item.</p>");
-            else
-            {
-                if (privateItems.TotalTitles == privateItems.TotalItems)
-                {
-                    Output.WriteLine("<p>There are a total of " + privateItems.TotalItems + " titles.</p>");
-                }
-                else
-                {
-                    Output.Write("<p>There are a total of " + privateItems.TotalItems + " items in ");
-                    if (privateItems.TotalTitles == 1)
-                        Output.WriteLine("one title.</p>");
-                    else
-                        Output.WriteLine(privateItems.TotalTitles + " titles.</p>");
-                }
-            }
-
-            Output.WriteLine("<br />");
-            Output.WriteLine("</div>");
            
             // Start the table to display
             Output.WriteLine("</div>");

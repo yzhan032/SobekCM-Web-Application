@@ -1,10 +1,14 @@
-﻿using System;
+﻿#region Using directives
+
+using System;
 using System.Text;
+using SobekCM.Core.BriefItem;
 using SobekCM.Resource_Object;
 using SobekCM.Resource_Object.Bib_Info;
-using SobekCM.Core.BriefItem;
 
-namespace SobekCM.Engine_Library.Items.BriefItems
+#endregion
+
+namespace SobekCM.Engine_Library.Items.BriefItems.Mappers
 {
     /// <summary> Maps all the names ( i.e., creator, contributor, etc.. ) from the METS-based 
     /// SobekCM_Item object to the BriefItem, used for most the public functions of the front-end </summary>
@@ -22,7 +26,7 @@ namespace SobekCM.Engine_Library.Items.BriefItems
             if (Original.Bib_Info.hasMainEntityName) 
             {
                 // Is this a conference?
-                if (Original.Bib_Info.Main_Entity_Name.Name_Type == Name_Info_Type_Enum.conference)
+                if (Original.Bib_Info.Main_Entity_Name.Name_Type == Name_Info_Type_Enum.Conference)
                 {
                     if (!String.IsNullOrWhiteSpace(Original.Bib_Info.Main_Entity_Name.Full_Name))
                         New.Add_Description("Conference", Original.Bib_Info.Main_Entity_Name.ToString());
@@ -76,7 +80,7 @@ namespace SobekCM.Engine_Library.Items.BriefItems
                 foreach (Name_Info thisName in Original.Bib_Info.Names)
                 {
                     // Is this a conference?
-                    if (thisName.Name_Type == Name_Info_Type_Enum.conference)
+                    if (thisName.Name_Type == Name_Info_Type_Enum.Conference)
                     {
                         if (!String.IsNullOrWhiteSpace(thisName.Full_Name))
                             New.Add_Description("Conference", thisName.ToString());

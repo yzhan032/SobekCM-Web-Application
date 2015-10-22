@@ -117,14 +117,11 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Microsoft.ApplicationBlocks.Data">
-      <HintPath>..\..\..\..\..\..\..\GitRepository\SobekCM-Web-Application\DLLs\Microsoft.ApplicationBlocks.Data.dll</HintPath>
-    </Reference>
     <Reference Include="Microsoft.Practices.ServiceLocation">
-      <HintPath>..\..\..\..\..\..\..\GitRepository\SobekCM-Web-Application\DLLs\SolrNet\Microsoft.Practices.ServiceLocation.dll</HintPath>
+      <HintPath>..\DLLs\SolrNet\Microsoft.Practices.ServiceLocation.dll</HintPath>
     </Reference>
     <Reference Include="SolrNet">
-      <HintPath>..\..\..\..\..\..\..\GitRepository\SobekCM-Web-Application\DLLs\SolrNet\SolrNet.dll</HintPath>
+      <HintPath>..\DLLs\SolrNet\SolrNet.dll</HintPath>
     </Reference>
     <Reference Include="System">
       <Name>System</Name>
@@ -144,10 +141,10 @@
     </Reference>
     <Reference Include="System.Xml.Linq" />
     <Reference Include="Zoom.Net">
-      <HintPath>..\..\..\..\..\..\..\GitRepository\SobekCM-Web-Application\DLLs\Zoom.net\Zoom.Net.dll</HintPath>
+      <HintPath>..\DLLs\Zoom.net\Zoom.Net.dll</HintPath>
     </Reference>
     <Reference Include="Zoom.Net.YazSharp">
-      <HintPath>..\..\..\..\..\..\..\GitRepository\SobekCM-Web-Application\DLLs\Zoom.net\Zoom.Net.YazSharp.dll</HintPath>
+      <HintPath>..\DLLs\Zoom.net\Zoom.Net.YazSharp.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -426,7 +423,12 @@
       <Install>true</Install>
     </BootstrapperPackage>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="..\EngineAgnosticLayerDbAccess\EngineAgnosticLayerDbAccess.csproj">
+      <Project>{b481ce6e-05fd-4336-9524-64d057aab107}</Project>
+      <Name>EngineAgnosticLayerDbAccess</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PreBuildEvent>
